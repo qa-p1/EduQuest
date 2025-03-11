@@ -1,3 +1,4 @@
-Flask==2.3.3
-Pyrebase4==4.7.1
-python-dotenv==1.0.0
+Flask
+Pyrebase4
+python-dotenv
+setuptools
