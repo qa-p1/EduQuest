@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Quizzer - Home{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="title">Quizzer</h1>
+
+    <div class="d-flex flex-column align-items-center">
+        <a href="{{ url_for('quiz') }}" class="btn btn-primary mb-3">Take Quiz</a>
+        <a href="{{ url_for('admin') }}" class="btn btn-secondary">Admin Panel</a>
+    </div>
+</div>
+{% endblock %}

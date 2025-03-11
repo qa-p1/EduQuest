@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Quizzer - Admin Login{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="title">Login</h1>
+
+    <form action="{{ url_for('admin') }}" method="post" class="d-flex flex-column align-items-center">
+        <input type="text" name="username" class="form-control" placeholder="Enter your admin username" required>
+        <input type="password" name="password" class="form-control" placeholder="Enter your admin password" required>
+
+        <button type="submit" class="btn btn-primary">Login into the admin</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Back</a>
+    </form>
+</div>
+{% endblock %}

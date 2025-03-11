@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Quizzer - Admin Interface{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="title">Admin Dashboard</h1>
+
+    <div class="d-flex justify-content-center my-4">
+        <div class="card mx-3 text-center" style="width: 18rem; cursor: pointer;">
+            <img src="{{ url_for('static', filename='icons/book.png') }}" class="card-img-top p-3" alt="Book icon" style="height: 150px; object-fit: contain;">
+            <div class="card-body">
+                <h5 class="card-title" style="font-size: 32px;">Add Subject</h5>
+                <a href="{{ url_for('add_subject') }}" class="stretched-link"></a>
+            </div>
+        </div>
+
+        <div class="card mx-3 text-center" style="width: 18rem; cursor: pointer;">
+            <img src="{{ url_for('static', filename='icons/question.png') }}" class="card-img-top p-3" alt="Question icon" style="height: 150px; object-fit: contain;">
+            <div class="card-body">
+                <h5 class="card-title" style="font-size: 32px;">Add Question</h5>
+                <a href="{{ url_for('add_question') }}" class="stretched-link"></a>
+            </div>
+        </div>
+    </div>
+
+    <a href="{{ url_for('logout') }}" class="btn btn-danger mt-4" style="width: 200px;">Logout</a>
+</div>
+{% endblock %}

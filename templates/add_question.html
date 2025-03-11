@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Quizzer - Add Question{% endblock %}
+
+{% block content %}
+<div>
+    <h1 class="title">Add Questions</h1>
+
+    <div class="d-flex flex-column align-items-center">
+        <form action="#" method="post" class="w-100 mb-4">
+            <div class="mb-3">
+                <label for="subject" class="form-label">Select Subject</label>
+                <select name="subject" id="subject" class="form-control">
+                    <option value="" selected disabled>Choose a subject</option>
+                    {% for subject in subjects %}
+                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="question_text" class="form-label">Question</label>
+                <textarea name="question_text" id="question_text" class="form-control" rows="3" required></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">Options</label>
+                <div class="mb-2">
+                    <input type="text" name="option1" class="form-control" placeholder="Option 1" required>
+                </div>
+                <div class="mb-2">
+                    <input type="text" name="option2" class="form-control" placeholder="Option 2" required>
+                </div>
+                <div class="mb-2">
+                    <input type="text" name="option3" class="form-control" placeholder="Option 3" required>
+                </div>
+                <div class="mb-2">
+                    <input type="text" name="option4" class="form-control" placeholder="Option 4" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="correct_answer" class="form-label">Correct Answer</label>
+                <select name="correct_answer" id="correct_answer" class="form-control" required>
+                    <option value="" selected disabled>Select correct option</option>
+                    <option value="1">Option 1</option>
+                    <option value="2">Option 2</option>
+                    <option value="3">Option 3</option>
+                    <option value="4">Option 4</option>
+                </select>
+            </div>
+
+            <div class="mb-3">
+                <label for="difficulty" class="form-label">Difficulty Level</label>
+                <select name="difficulty" id="difficulty" class="form-control" required>
+                    <option value="" selected disabled>Select difficulty</option>
+                    <option value="Easy">Easy</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Hard">Hard</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Add Question</button>
+        </form>
+
+        <a href="{{ url_for('admin_interface') }}" class="btn btn-secondary mt-3">Back to Admin Panel</a>
+    </div>
+</div>
+{% endblock %}
