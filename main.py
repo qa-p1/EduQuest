@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-replace-in-production')
+app.secret_key = os.getenv('SECRET_KEY')
 
 # Firebase configuration
 firebase_config = {
@@ -24,15 +24,6 @@ print(os.getenv('FIREBASE_API_KEY'))
 firebase = pyrebase.initialize_app(firebase_config)
 db = firebase.database()
 
-# Get all data from the root of your database
-all_data = db.get()
-
-# Print all data
-print("All data in database:")
-for key in all_data.each():
-    print(f"Key: {key.key()}")
-    print(f"Value: {key.val()}")
-    print("-" * 30)
 
 @app.route('/')
 def index():
