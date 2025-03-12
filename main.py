@@ -12,18 +12,25 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
 # Firebase configuration and initialization
+# Firebase configuration and initialization
 try:
     # Check if the app is already initialized
     firebase_admin.get_app()
 except ValueError:
-    # Get the current directory of the file
-    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Try to get credentials from environment variable first
+    service_account_json = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON')
 
-    # Path to service account file
-    service_account_path = os.path.join(current_dir, 'serviceAccountKey.json')
+    if service_account_json:
+        # Parse the JSON string from environment variable
+        try:
+            service_account_info = json.loads(service_account_json)
+            # Use the parsed JSON directly with Certificate
+            firebase_credentials = credentials.Certificate(service_account_info)
+        except json.JSONDecodeError as e:
+            print(f"Error parsing JSON from environment variable: {e}")
+            raise
 
-    # Initialize the app with credentials from file
-    firebase_credentials = credentials.Certificate(service_account_path)
+    # Initialize Firebase app with the credentials
     firebase_admin.initialize_app(firebase_credentials, {
         'databaseURL': os.getenv('FIREBASE_DATABASE_URL')
     })
