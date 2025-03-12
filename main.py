@@ -1,7 +1,9 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
-import pyrebase
+import firebase_admin
+from firebase_admin import credentials, db
 import os
 from dotenv import load_dotenv
+import json
 
 # Load environment variables
 load_dotenv()
@@ -9,20 +11,25 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')
 
-# Firebase configuration
-firebase_config = {
-    "apiKey": os.getenv('FIREBASE_API_KEY'),
-    "authDomain": os.getenv('FIREBASE_AUTH_DOMAIN'),
-    "projectId": os.getenv('FIREBASE_PROJECT_ID'),
-    "storageBucket": os.getenv('FIREBASE_STORAGE_BUCKET'),
-    "messagingSenderId": os.getenv('FIREBASE_MESSAGING_SENDER_ID'),
-    "appId": os.getenv('FIREBASE_APP_ID'),
-    "databaseURL": os.getenv('FIREBASE_DATABASE_URL')
-}
-print(os.getenv('FIREBASE_API_KEY'))
-# Initialize Firebase
-firebase = pyrebase.initialize_app(firebase_config)
-db = firebase.database()
+# Firebase configuration and initialization
+try:
+    # Check if the app is already initialized
+    firebase_admin.get_app()
+except ValueError:
+    # Get the current directory of the file
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+
+    # Path to service account file
+    service_account_path = os.path.join(current_dir, 'serviceAccountKey.json')
+
+    # Initialize the app with credentials from file
+    firebase_credentials = credentials.Certificate(service_account_path)
+    firebase_admin.initialize_app(firebase_credentials, {
+        'databaseURL': os.getenv('FIREBASE_DATABASE_URL')
+    })
+
+# Database reference
+database = db.reference('/')
 
 
 @app.route('/')
@@ -35,9 +42,10 @@ def quiz():
     # Get subjects from Firebase for dropdown
     subjects = []
     try:
-        subject_data = db.child("subjects").get().val()
-        if subject_data:
-            for key, value in subject_data.items():
+        subjects_ref = database.child('subjects')
+        subjects_data = subjects_ref.get()
+        if subjects_data:
+            for key, value in subjects_data.items():
                 subjects.append({"id": key, "name": value.get("name", "Unknown")})
     except Exception as e:
         print(f"Error fetching subjects: {e}")
@@ -52,11 +60,10 @@ def admin():
         password = request.form.get('password')
         try:
             # Check admin credentials against Firebase
-            admin_data = db.child("admins").get().val()
-            print(admin_data)
+            admin_ref = database.child('admins')
+            admin_data = admin_ref.get()
             if admin_data:
                 for key, value in admin_data.items():
-                    print(key, "key")
                     if value.get("username") == username and value.get("password") == password:
                         session['admin'] = True
                         return redirect(url_for('admin_interface'))
@@ -90,16 +97,19 @@ def add_subject():
         if subject_name:
             try:
                 # Add new subject to Firebase
-                db.child("subjects").push({"name": subject_name})
+                subjects_ref = database.child('subjects')
+                new_subject_ref = subjects_ref.push()
+                new_subject_ref.set({"name": subject_name})
                 flash(f"Subject '{subject_name}' added successfully!")
             except Exception as e:
                 flash(f"Error adding subject: {e}")
 
     # Get current subjects
     try:
-        subject_data = db.child("subjects").get().val()
-        if subject_data:
-            for key, value in subject_data.items():
+        subjects_ref = database.child('subjects')
+        subjects_data = subjects_ref.get()
+        if subjects_data:
+            for key, value in subjects_data.items():
                 subjects.append({"id": key, "name": value.get("name", "Unknown")})
     except Exception as e:
         flash(f"Error fetching subjects: {e}")
@@ -114,7 +124,8 @@ def delete_subject(subject_id):
         return redirect(url_for('admin'))
 
     try:
-        db.child("subjects").child(subject_id).remove()
+        subject_ref = database.child(f'subjects/{subject_id}')
+        subject_ref.delete()
         flash("Subject deleted successfully!")
     except Exception as e:
         flash(f"Error deleting subject: {e}")
@@ -131,7 +142,8 @@ def update_subject(subject_id):
     new_name = request.form.get('new_name')
     if new_name:
         try:
-            db.child("subjects").child(subject_id).update({"name": new_name})
+            subject_ref = database.child(f'subjects/{subject_id}')
+            subject_ref.update({"name": new_name})
             flash("Subject updated successfully!")
         except Exception as e:
             flash(f"Error updating subject: {e}")
@@ -148,9 +160,10 @@ def add_question():
     # Get subjects for dropdown
     subjects = []
     try:
-        subject_data = db.child("subjects").get().val()
-        if subject_data:
-            for key, value in subject_data.items():
+        subjects_ref = database.child('subjects')
+        subjects_data = subjects_ref.get()
+        if subjects_data:
+            for key, value in subjects_data.items():
                 subjects.append({"id": key, "name": value.get("name", "Unknown")})
     except Exception as e:
         flash(f"Error fetching subjects: {e}")
@@ -186,7 +199,9 @@ def add_question():
 
         try:
             # Add question to Firebase
-            db.child("questions").push(question_data)
+            questions_ref = database.child('questions')
+            new_question_ref = questions_ref.push()
+            new_question_ref.set(question_data)
             flash("Question added successfully!")
             # Clear form by redirecting
             return redirect(url_for('add_question'))

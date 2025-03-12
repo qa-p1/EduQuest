@@ -1,2 +1,5 @@
 
 .env
+serviceAccountKey.json
+.vercel
+.idea
