@@ -1,0 +1,90 @@
+{% extends "menu.html" %}
+
+{% block title %}EduQuest - Student Dashboard{% endblock %}
+
+{% block menu_items %}
+<li>
+    <a href="{{ url_for('student_dashboard') }}" class="active">
+        <i class="fas fa-home"></i>
+        <span>Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('quiz') }}">
+        <i class="fas fa-edit"></i>
+        <span>Take Quiz</span>
+    </a>
+</li>
+<li>
+    <a href="#quiz-history">
+        <i class="fas fa-history"></i>
+        <span>Quiz History</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('profile') }}">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4">Student Dashboard</h1>
+        <div class="alert {% if session.get('active') %}alert-success{% else %}alert-warning{% endif %} d-flex align-items-center">
+            <i class="fas {% if session.get('active') %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-3 fs-3"></i>
+            <div>
+                <strong>Account Status:</strong> {% if session.get('active') %}
+                    Your account is active. You can participate in quizzes and exams.
+                {% else %}
+                    Your account is currently inactive. Please contact your teacher to activate your account.
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-edit me-2"></i>Available Quizzes</h5>
+                <p class="card-text">Take quizzes assigned to you by your teachers.</p>
+                {% if session.get('active') %}
+                    <a href="{{ url_for('quiz') }}" class="btn btn-primary">Take Quiz</a>
+                {% else %}
+                    <button class="btn btn-secondary" disabled>Take Quiz</button>
+                    <small class="d-block mt-2 text-muted">Available when your account is activated</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-history me-2"></i>Quiz History</h5>
+                <p class="card-text">View your previous quiz attempts and scores.</p>
+                <a href="#quiz-history" class="btn btn-outline-primary">View History</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-chart-line me-2"></i>Your Performance</h5>
+                <p class="card-text">Your quiz performance will be displayed here once you start taking quizzes.</p>
+                <div class="text-center py-5">
+                    <i class="fas fa-chart-bar fa-4x text-muted mb-3"></i>
+                    <p>No quiz data available yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

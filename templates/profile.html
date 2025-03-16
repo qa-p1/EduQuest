@@ -1,0 +1,99 @@
+{% extends "menu.html" %}
+
+{% block title %}EduQuest - Profile{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4">My Profile</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-user-circle fa-7x text-primary"></i>
+                </div>
+                <h4>{{ user_data.name }}</h4>
+                <p class="text-muted">{{ session.get('email') }}</p>
+                <span class="badge {% if session.get('user_type') == 'admin' %}bg-danger{% elif session.get('user_type') == 'teacher' %}bg-primary{% else %}bg-success{% endif %} mb-2">
+                    {{ session.get('user_type', '').title() }}
+                </span>
+                {% if session.get('user_type') == 'student' %}
+                    <span class="badge {% if user_data.active %}bg-success{% else %}bg-warning{% endif %} mb-2 ms-1">
+                        {{ 'Active' if user_data.active else 'Inactive' }}
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Profile Information</h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Full Name</label>
+                        <input type="text" class="form-control" id="name" value="{{ user_data.name }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" value="{{ session.get('email') }}" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="user-type" class="form-label">User Type</label>
+                        <input type="text" class="form-control" id="user-type" value="{{ session.get('user_type', '').title() }}" readonly>
+                    </div>
+                    {% if user_data.get('school') %}
+                    <div class="mb-3">
+                        <label for="school" class="form-label">School/Institution</label>
+                        <input type="text" class="form-control" id="school" value="{{ user_data.school }}" readonly>
+                    </div>
+                    {% endif %}
+                    {% if user_data.get('joined_date') %}
+                    <div class="mb-3">
+                        <label for="joined-date" class="form-label">Joined Date</label>
+                        <input type="text" class="form-control" id="joined-date" value="{{ user_data.joined_date }}" readonly>
+                    </div>
+                    {% endif %}
+                    <button type="button" class="btn btn-primary" disabled>Edit Profile</button>
+                    <small class="text-muted ms-2">Edit functionality will be available soon</small>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Account Security</h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="mb-3">
+                        <label for="current-password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current-password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="new-password" class="form-label">New Password</label>
+                        <input type="password" class="form-control" id="new-password">
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm-password" class="form-label">Confirm New Password</label>
+                        <input type="password" class="form-control" id="confirm-password">
+                    </div>
+                    <button type="button" class="btn btn-primary" disabled>Change Password</button>
+                    <small class="text-muted ms-2">Password change functionality will be available soon</small>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

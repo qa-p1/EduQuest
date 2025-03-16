@@ -1,3 +1,4 @@
-Flask
+Flask~=2.3.3
 firebase-admin
-python-dotenv
+python-dotenv~=1.0.0
+bcrypt~=4.3.0

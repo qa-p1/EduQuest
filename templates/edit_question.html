@@ -1,0 +1,161 @@
+{% extends "menu.html" %}
+
+{% block title %}EduQuest - Edit Question{% endblock %}
+
+{% block menu_items %}
+{% if session.get('user_type') == 'teacher' %}
+<li>
+    <a href="{{ url_for('teacher_dashboard') }}">
+        <i class="fas fa-home"></i>
+        <span>Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('generate_exam') }}">
+        <i class="fas fa-file-alt"></i>
+        <span>Generate Exam</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('submissions') }}">
+        <i class="fas fa-clipboard-check"></i>
+        <span>Submissions</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('manage_students') }}">
+        <i class="fas fa-users"></i>
+        <span>Manage Students</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('add_question') }}" class="active">
+        <i class="fas fa-question-circle"></i>
+        <span>Add Questions</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('profile') }}">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+</li>
+{% else %}
+<!-- Admin menu items -->
+<li>
+    <a href="{{ url_for('admin_dashboard') }}">
+        <i class="fas fa-home"></i>
+        <span>Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('add_subject') }}">
+        <i class="fas fa-book"></i>
+        <span>Manage Subjects</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('add_question') }}" class="active">
+        <i class="fas fa-question-circle"></i>
+        <span>Manage Questions</span>
+    </a>
+</li>
+<li>
+    <a href="#manage-users">
+        <i class="fas fa-users-cog"></i>
+        <span>Manage Users</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('profile') }}">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+</li>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4">Edit Question</h1>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Edit Question</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('edit_question', question_id=question_id) }}" method="POST">
+                    <div class="mb-3">
+                        <label for="subject" class="form-label">Subject</label>
+                        <select class="form-select" id="subject" name="subject" required>
+                            <option value="" disabled>Select a subject</option>
+                            {% for subject in subjects %}
+                            <option value="{{ subject.id }}" {% if subject.id == question.subject_id %}selected{% endif %}>{{ subject.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="question_text" class="form-label">Question Text</label>
+                        <textarea class="form-control" id="question_text" name="question_text" rows="3" required>{{ question.text }}</textarea>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="option1" class="form-label">Option 1</label>
+                            <input type="text" class="form-control" id="option1" name="option1" value="{{ question.options.1 }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="option2" class="form-label">Option 2</label>
+                            <input type="text" class="form-control" id="option2" name="option2" value="{{ question.options.2 }}" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="option3" class="form-label">Option 3</label>
+                            <input type="text" class="form-control" id="option3" name="option3" value="{{ question.options.3 }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="option4" class="form-label">Option 4</label>
+                            <input type="text" class="form-control" id="option4" name="option4" value="{{ question.options.4 }}" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="correct_answer" class="form-label">Correct Answer</label>
+                            <select class="form-select" id="correct_answer" name="correct_answer" required>
+                                <option value="" disabled>Select correct option</option>
+                                <option value="1" {% if question.correct_answer == "1" %}selected{% endif %}>Option 1</option>
+                                <option value="2" {% if question.correct_answer == "2" %}selected{% endif %}>Option 2</option>
+                                <option value="3" {% if question.correct_answer == "3" %}selected{% endif %}>Option 3</option>
+                                <option value="4" {% if question.correct_answer == "4" %}selected{% endif %}>Option 4</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="difficulty" class="form-label">Difficulty Level</label>
+                            <select class="form-select" id="difficulty" name="difficulty" required>
+                                <option value="" disabled>Select difficulty</option>
+                                <option value="easy" {% if question.difficulty == "easy" %}selected{% endif %}>Easy</option>
+                                <option value="medium" {% if question.difficulty == "medium" %}selected{% endif %}>Medium</option>
+                                <option value="hard" {% if question.difficulty == "hard" %}selected{% endif %}>Hard</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('add_question') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Update Question</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

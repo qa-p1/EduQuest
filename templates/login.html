@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Quizzer - Login{% endblock %}
+
+{% block content %}
+<div class="text-center">
+    <h1 class="title">Login</h1>
+
+    {% if user_type %}
+    <h4 class="mb-4">Sign in as {{ user_type|title }}</h4>
+    {% endif %}
+
+    <form action="{{ url_for('login') }}" method="post" class="d-flex flex-column align-items-center">
+        <input type="hidden" name="user_type" value="{{ user_type }}">
+
+        <input type="email" name="email" class="form-control" placeholder="Enter your email" required>
+        <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+
+        <button type="submit" class="btn btn-primary">Login</button>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Back</a>
+    </form>
+</div>
+{% endblock %}

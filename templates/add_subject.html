@@ -3,6 +3,8 @@
 {% block title %}Quizzer - Add Subject{% endblock %}
 
 {% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/add-subject.css') }}">
 <div>
     <h1 class="title">Add Subjects</h1>
 
@@ -46,7 +48,7 @@
             </div>
         </form>
 
-        <a href="{{ url_for('admin_interface') }}" class="btn btn-secondary mt-3">Back to Admin Panel</a>
+        <a href="{{ url_for('admin/dashboard.html') }}" class="btn btn-secondary mt-3">Back to Admin Panel</a>
     </div>
 </div>
 

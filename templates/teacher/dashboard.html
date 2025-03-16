@@ -1,0 +1,160 @@
+{% extends "menu.html" %}
+
+{% block title %}EduQuest - Teacher Dashboard{% endblock %}
+
+{% block menu_items %}
+<li>
+    <a href="{{ url_for('teacher_dashboard') }}" class="active">
+        <i class="fas fa-home"></i>
+        <span>Dashboard</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('generate_exam') }}">
+        <i class="fas fa-file-alt"></i>
+        <span>Generate Exam</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('submissions') }}">
+        <i class="fas fa-clipboard-check"></i>
+        <span>Submissions</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('manage_students') }}">
+        <i class="fas fa-users"></i>
+        <span>Manage Students</span>
+    </a>
+</li>
+<li>
+    <a href="{{ url_for('profile') }}">
+        <i class="fas fa-user"></i>
+        <span>Profile</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4">Teacher Dashboard</h1>
+        <p class="lead">Welcome back, {{ session.get('name', 'Teacher') }}!</p>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-4">
+                        <i class="fas fa-users fa-3x"></i>
+                    </div>
+                    <div class="col-8 text-end">
+                        <h5 class="card-title">Students</h5>
+                        <h2 class="display-6">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <a href="{{ url_for('manage_students') }}" class="text-white">Manage Students <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-4">
+                        <i class="fas fa-file-alt fa-3x"></i>
+                    </div>
+                    <div class="col-8 text-end">
+                        <h5 class="card-title">Exams</h5>
+                        <h2 class="display-6">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <a href="{{ url_for('generate_exam') }}" class="text-white">Create Exam <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card bg-warning text-dark">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-4">
+                        <i class="fas fa-clipboard-check fa-3x"></i>
+                    </div>
+                    <div class="col-8 text-end">
+                        <h5 class="card-title">Submissions</h5>
+                        <h2 class="display-6">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <a href="{{ url_for('submissions') }}" class="text-dark">View All <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-4">
+                        <i class="fas fa-chart-line fa-3x"></i>
+                    </div>
+                    <div class="col-8 text-end">
+                        <h5 class="card-title">Completion</h5>
+                        <h2 class="display-6">0%</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0">
+                <a href="#" class="text-white">View Stats <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-2">
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-list fa-4x text-muted mb-3"></i>
+                    <p>No recent activities found.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="{{ url_for('generate_exam') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-plus-circle me-2"></i> Create New Exam
+                    </a>
+                    <a href="{{ url_for('manage_students') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-user-plus me-2"></i> Add Student
+                    </a>
+                    <a href="{{ url_for('submissions') }}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-check-circle me-2"></i> Grade Submissions
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
