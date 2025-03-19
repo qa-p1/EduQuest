@@ -2,38 +2,6 @@
 
 {% block title %}EduQuest - Admin Dashboard{% endblock %}
 
-{% block menu_items %}
-<li>
-    <a href="{{ url_for('admin_dashboard') }}" class="active">
-        <i class="fas fa-home"></i>
-        <span>Dashboard</span>
-    </a>
-</li>
-<li>
-    <a href="{{ url_for('add_subject') }}">
-        <i class="fas fa-book"></i>
-        <span>Manage Subjects</span>
-    </a>
-</li>
-<li>
-    <a href="{{ url_for('add_question') }}">
-        <i class="fas fa-question-circle"></i>
-        <span>Manage Questions</span>
-    </a>
-</li>
-<li>
-    <a href="#manage-users">
-        <i class="fas fa-users-cog"></i>
-        <span>Manage Users</span>
-    </a>
-</li>
-<li>
-    <a href="{{ url_for('profile') }}">
-        <i class="fas fa-user"></i>
-        <span>Profile</span>
-    </a>
-</li>
-{% endblock %}
 
 {% block content %}
 <div class="row mt-4">
@@ -216,5 +184,6 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 {% endblock %}

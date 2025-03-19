@@ -2,39 +2,6 @@
 
 {% block title %}EduQuest - Teacher Dashboard{% endblock %}
 
-{% block menu_items %}
-<li>
-    <a href="{{ url_for('teacher_dashboard') }}" class="active">
-        <i class="fas fa-home"></i>
-        <span>Dashboard</span>
-    </a>
-</li>
-<li>
-    <a href="{{ url_for('generate_exam') }}">
-        <i class="fas fa-file-alt"></i>
-        <span>Generate Exam</span>
-    </a>
-</li>
-<li>
-    <a href="{{ url_for('submissions') }}">
-        <i class="fas fa-clipboard-check"></i>
-        <span>Submissions</span>
-    </a>
-</li>
-<li>
-    <a href="{{ url_for('manage_students') }}">
-        <i class="fas fa-users"></i>
-        <span>Manage Students</span>
-    </a>
-</li>
-<li>
-    <a href="{{ url_for('profile') }}">
-        <i class="fas fa-user"></i>
-        <span>Profile</span>
-    </a>
-</li>
-{% endblock %}
-
 {% block content %}
 <div class="row mt-4">
     <div class="col-12">

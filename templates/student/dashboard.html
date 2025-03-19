@@ -2,32 +2,6 @@
 
 {% block title %}EduQuest - Student Dashboard{% endblock %}
 
-{% block menu_items %}
-<li>
-    <a href="{{ url_for('student_dashboard') }}" class="active">
-        <i class="fas fa-home"></i>
-        <span>Dashboard</span>
-    </a>
-</li>
-<li>
-    <a href="{{ url_for('quiz') }}">
-        <i class="fas fa-edit"></i>
-        <span>Take Quiz</span>
-    </a>
-</li>
-<li>
-    <a href="#quiz-history">
-        <i class="fas fa-history"></i>
-        <span>Quiz History</span>
-    </a>
-</li>
-<li>
-    <a href="{{ url_for('profile') }}">
-        <i class="fas fa-user"></i>
-        <span>Profile</span>
-    </a>
-</li>
-{% endblock %}
 
 {% block content %}
 <div class="row mt-4">

@@ -47,11 +47,10 @@ def get_menu_items(user_type):
     if os.path.isdir(user_type_dir):
         # Get all HTML files in the user type directory
         files = [f for f in os.listdir(user_type_dir) if f.endswith('.html')]
-
         for file in files:
+
             # Remove .html extension
             name = os.path.splitext(file)[0]
-
             # Skip certain files that shouldn't be in menu
             if name in ['base', 'layout', 'components']:
                 continue
@@ -60,8 +59,8 @@ def get_menu_items(user_type):
             display_name = name.replace('_', ' ').title()
 
             # Get route function name (convert to snake_case if needed)
-            route_name = f"{user_type}_{name}" if name != 'dashboard' else f"{user_type}_dashboard"
-
+            route_name = name
+            print(route_name)
             # Create icon mapping based on common naming patterns
             icon_mapping = {
                 'dashboard': 'fas fa-home',
@@ -193,6 +192,8 @@ def login():
                     session['email'] = email
                     session['user_type'] = 'admin'
                     session['name'] = admin_data.get("name", "Admin")
+                    # Generate menu items once and store in session
+                    session['menu_items'] = get_menu_items('admin')
                     return redirect(url_for('dashboard'))
 
             elif user_type == 'teacher':
@@ -205,6 +206,8 @@ def login():
                     session['email'] = email
                     session['user_type'] = 'teacher'
                     session['name'] = teacher_data.get("name", "Teacher")
+                    # Generate menu items once and store in session
+                    session['menu_items'] = get_menu_items('teacher')
                     return redirect(url_for('dashboard'))
 
             elif user_type == 'student':
@@ -218,6 +221,8 @@ def login():
                     session['user_type'] = 'student'
                     session['name'] = student_data.get("name", "Student")
                     session['active'] = student_data.get("active", False)
+                    # Generate menu items once and store in session
+                    session['menu_items'] = get_menu_items('student')
                     return redirect(url_for('dashboard'))
 
             flash("Invalid credentials. Please try again.")
@@ -243,14 +248,7 @@ def quiz():
 
     return render_template('student/quiz.html', subjects=subjects)
 
-
-@app.route('/admin')
-def admin():
-    user_type = request.args.get('user_type', 'admin')
-    return redirect(url_for('login', user_type=user_type))
-
-
-@app.route('/add_subject', methods=['GET', 'POST'])
+@app.route('/admin/add_subject', methods=['GET', 'POST'])
 @login_required(user_types=['admin'])
 def add_subject():
     subjects = []
@@ -277,58 +275,44 @@ def add_subject():
     except Exception as e:
         flash(f"Error fetching subjects: {e}")
 
-    # Get menu items
-    menu_items = get_menu_items(session.get('user_type', 'admin'))
-    return render_template('add_subject.html', subjects=subjects, menu_items=menu_items)
+    return render_template('admin/add_subject.html', subjects=subjects)
 
 
-@app.route('/student/dashboard')
+@app.route('/student/')
 @login_required(user_types=['student'])
 def student_dashboard():
-    # Get menu items
-    menu_items = get_menu_items('student')
-    return render_template('student/dashboard.html', menu_items=menu_items)
+    return render_template('student/dashboard.html')
 
 
 # teacher part
-@app.route('/teacher/dashboard')
+@app.route('/teacher/')
 @login_required(user_types=['teacher'])
 def teacher_dashboard():
-    # Get menu items
-    menu_items = get_menu_items('teacher')
-    return render_template('teacher/dashboard.html', menu_items=menu_items)
+    return render_template('teacher/dashboard.html')
 
 
 @app.route('/teacher/generate_exam')
 @login_required(user_types=['teacher'])
 def generate_exam():
-    # Get menu items
-    menu_items = get_menu_items('teacher')
-    return render_template('teacher/generate_exam.html', menu_items=menu_items)
+    return render_template('teacher/generate_exam.html')
 
 
 @app.route('/teacher/submissions')
 @login_required(user_types=['teacher'])
 def submissions():
-    # Get menu items
-    menu_items = get_menu_items('teacher')
-    return render_template('teacher/submissions.html', menu_items=menu_items)
+    return render_template('teacher/submissions.html')
 
 
 @app.route('/teacher/manage_students')
 @login_required(user_types=['teacher'])
 def manage_students():
-    # Get menu items
-    menu_items = get_menu_items('teacher')
-    return render_template('teacher/manage_students.html', menu_items=menu_items)
+    return render_template('teacher/manage_students.html')
 
 
-@app.route('/admin/dashboard')
+@app.route('/admin/')
 @login_required(user_types=['admin'])
 def admin_dashboard():
-    # Get menu items
-    menu_items = get_menu_items('admin')
-    return render_template('admin/dashboard.html', menu_items=menu_items)
+    return render_template('admin/dashboard.html')
 
 
 @app.route('/profile')
@@ -397,7 +381,7 @@ def update_subject(subject_id):
 
 def teacher_teaches_subject(teacher_id, subject_id):
     try:
-        teacher_ref = database.child(f'administrators/teachers/{teacher_id}')
+        teacher_ref = database.cfhild(f'administrators/teachers/{teacher_id}')
         teacher_data = teacher_ref.get()
 
         if not teacher_data or 'subjects' not in teacher_data:
@@ -654,8 +638,13 @@ def logout():
 # Context processor to make menu_items available to all templates
 @app.context_processor
 def inject_menu_items():
-    if 'user_type' in session:
-        return {'menu_items': get_menu_items(session.get('user_type'))}
+    if 'menu_items' in session:
+        return {'menu_items': session.get('menu_items', [])}
+    elif 'user_type' in session:
+        # Fallback if menu_items not in session
+        menu_items = get_menu_items(session.get('user_type'))
+        session['menu_items'] = menu_items
+        return {'menu_items': menu_items}
     return {'menu_items': []}
 
 
