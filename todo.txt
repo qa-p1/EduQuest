@@ -1,6 +1,3 @@
-make add question different for both admin and teacher and let edit question remain the same
-clear up the css part
-manage code in main.py in multiple file
 create generate exam
 create submission page which will be individually for each subject and each subject
 ...

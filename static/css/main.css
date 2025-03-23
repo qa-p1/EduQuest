@@ -1,7 +1,7 @@
-/* main.css - Core styles for Quizzer app */
-
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=JetBrains+Mono&family=Poppins:wght@600;700&display=swap');
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
+@import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css');
 :root {
-  /* Color palette */
   --primary-color: #4361ee;
   --primary-hover: #3a56d4;
   --secondary-color: #60676e;
@@ -14,42 +14,44 @@
   --border-color: #dee2e6;
   --shadow: rgba(0, 0, 0, 0.1);
 
-  /* Typography */
-  --font-main: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --sidebar-width: 250px;
+  --text-muted: #64748b;
+
+  --font-main: 'Quicksand', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   --font-heading: 'Poppins', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Spacing */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
   --spacing-lg: 1.5rem;
   --spacing-xl: 2.5rem;
 
-  /* Border radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 1rem;
+  --radius-sm: 0.5rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1.25rem;
 }
 
-/* Typography imports */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono&family=Poppins:wght@600;700&display=swap');
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
-/* Base styles */
 html {
   font-size: 16px;
 }
 
 body {
   font-family: var(--font-main);
-  background-color: #f8f9fa;
+  background-color: var(--light-color);
   color: var(--dark-color);
   margin: 0;
-  padding: 0;
+  padding: 1rem;
   min-height: 100vh;
+  line-height: 1.5;
 }
 
-/* Container */
 .container {
   width: 100%;
   padding-right: var(--spacing-md);
@@ -59,7 +61,6 @@ body {
   max-width: 1140px;
 }
 
-/* Main container styling */
 .main-container {
   max-width: 800px;
   margin: var(--spacing-xl) auto;
@@ -69,13 +70,27 @@ body {
   box-shadow: 0 0.5rem 1rem var(--shadow);
 }
 
-/* Typography */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 2rem;
+  animation: slideDown 0.5s ease-out;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   margin-top: 0;
   margin-bottom: var(--spacing-md);
   font-weight: 600;
   line-height: 1.2;
+}
+
+.header h1 {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  color: var(--dark-color);
+  margin: 0;
 }
 
 .title {
@@ -87,7 +102,142 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--primary-color);
 }
 
-/* Forms */
+.menu-trigger {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  z-index: 1001;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-trigger:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 8px -2px rgba(0, 0, 0, 0.1);
+}
+
+.menu-trigger.hidden {
+  display: none;
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: var(--sidebar-width);
+  height: 100vh;
+  background-color: white;
+  box-shadow: 2px 0 8px var(--shadow);
+  z-index: 1000;
+  transform: translateX(-100%);
+  opacity: 0;
+  visibility: hidden;
+  transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.sidebar.active {
+  transform: translateX(0);
+  opacity: 1;
+  visibility: visible;
+}
+
+.sidebar-header {
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sidebar-header h2 {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--dark-color);
+  margin: 0;
+}
+
+.sidebar-close {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.5rem;
+  transition: color 0.2s;
+}
+
+.sidebar-close:hover {
+  color: var(--primary-color);
+}
+
+.nav-links {
+  list-style: none;
+  padding: 1rem 0;
+  margin: 0;
+}
+
+.nav-links li a {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  color: var(--dark-color);
+  text-decoration: none;
+  transition: all 0.2s ease;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.nav-links li a:hover,
+.nav-links li a.active {
+  background-color: var(--light-color);
+  color: var(--primary-color);
+  transform: translateX(4px);
+}
+
+.nav-links li a i {
+  width: 1.25rem;
+  text-align: center;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.nav-links li a:hover i,
+.nav-links li a.active i {
+  color: var(--primary-color);
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+  z-index: 999;
+}
+
+.overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.content {
+  margin-left: 0;
+  padding: 2rem;
+  transition: margin-left 0.3s ease;
+}
+
 .form-control {
   display: block;
   width: 100%;
@@ -126,14 +276,12 @@ textarea.form-control {
   min-height: 100px;
 }
 
-/* Labels */
 .form-label {
   margin-bottom: 0.5rem;
   font-weight: 500;
   display: block;
 }
 
-/* Buttons */
 .btn {
   display: inline-block;
   font-weight: 500;
@@ -204,7 +352,6 @@ textarea.form-control {
   border-color: var(--danger-hover);
 }
 
-/* Tables */
 .table {
   width: 100%;
   margin-bottom: 1rem;
@@ -229,7 +376,6 @@ textarea.form-control {
   background-color: rgba(0, 0, 0, 0.03);
 }
 
-/* Alerts */
 .alert {
   position: relative;
   padding: 1rem;
@@ -248,7 +394,6 @@ textarea.form-control {
   margin-bottom: var(--spacing-lg);
 }
 
-/* Cards */
 .card {
   position: relative;
   display: flex;
@@ -282,7 +427,17 @@ textarea.form-control {
   margin-bottom: 0.75rem;
 }
 
-/* Utility classes */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .text-center {
   text-align: center;
 }
@@ -329,7 +484,6 @@ textarea.form-control {
   width: 100%;
 }
 
-/* Responsive */
 @media (max-width: 576px) {
   .main-container {
     padding: var(--spacing-md);
@@ -348,6 +502,25 @@ textarea.form-control {
 
   .card {
     margin-bottom: var(--spacing-md);
+  }
+
+  .sidebar {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .header h1 {
+    font-size: 1.75rem;
+  }
+
+  .content {
+    padding: 1rem;
   }
 }
 

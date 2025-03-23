@@ -1,98 +1,29 @@
-{#
-  add_question.html - Template for adding and managing questions
-  Extends the base menu template and implements specific functionality
-  for both teachers and administrators
-#}
-
 {% extends "menu.html" %}
 
 {% block title %}EduQuest - Add Question{% endblock %}
 
-{# Include necessary CSS files #}
 {% block styles %}
-    {{ super() }}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/add-question.css') }}">
+    <style>
+        .question-type-container {
+            display: none;
+        }
+        .add-item-btn {
+            margin-top: 10px;
+        }
+        .blanks-container, .columns-container, .case-questions-container {
+            margin-top: 15px;
+        }
+        .blank-item, .column-item, .case-question-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 4px;
+            background-color: #f8f9fa;
+        }
+    </style>
 {% endblock %}
 
-{# Define menu items based on user role #}
-{% block menu_items %}
-    {% if session.get('user_type') == 'teacher' %}
-        {# Teacher navigation menu #}
-        <li>
-            <a href="{{ url_for('teacher_dashboard') }}">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ url_for('generate_exam') }}">
-                <i class="fas fa-file-alt"></i>
-                <span>Generate Exam</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ url_for('submissions') }}">
-                <i class="fas fa-clipboard-check"></i>
-                <span>Submissions</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ url_for('manage_students') }}">
-                <i class="fas fa-users"></i>
-                <span>Manage Students</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ url_for('add_question') }}" class="active">
-                <i class="fas fa-question-circle"></i>
-                <span>Add Questions</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ url_for('profile') }}">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </a>
-        </li>
-    {% else %}
-        {# Admin navigation menu #}
-        <li>
-            <a href="{{ url_for('admin_dashboard') }}">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ url_for('add_subject') }}">
-                <i class="fas fa-book"></i>
-                <span>Manage Subjects</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ url_for('add_question') }}" class="active">
-                <i class="fas fa-question-circle"></i>
-                <span>Manage Questions</span>
-            </a>
-        </li>
-        <li>
-            <a href="#manage-users">
-                <i class="fas fa-users-cog"></i>
-                <span>Manage Users</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ url_for('profile') }}">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
-            </a>
-        </li>
-    {% endif %}
-{% endblock %}
-
-{# Main content area #}
 {% block content %}
-    {# Page header #}
     <div class="row mt-4">
         <div class="col-12">
             <h1 class="display-5 mb-4">
@@ -105,7 +36,6 @@
         </div>
     </div>
 
-    {# Add Question Form Section #}
     <div class="row">
         <div class="col-md-12 mb-4">
             <div class="card">
@@ -114,60 +44,28 @@
                 </div>
                 <div class="card-body">
                     <form action="{{ url_for('add_question') }}" method="POST">
-                        {# Subject selection #}
-                        <div class="mb-3">
-                            <label for="subject" class="form-label">Subject</label>
-                            <select class="form-select" id="subject" name="subject" required>
-                                <option value="" selected disabled>Select a subject</option>
-                                {% for subject in subjects %}
-                                    <option value="{{ subject.id }}">{{ subject.name }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
-
-                        {# Question text area #}
-                        <div class="mb-3">
-                            <label for="question_text" class="form-label">Question Text</label>
-                            <textarea class="form-control" id="question_text" name="question_text" rows="3" required></textarea>
-                        </div>
-
-                        {# Answer options - first row #}
+                        {# Basic question information #}
                         <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="option1" class="form-label">Option 1</label>
-                                <input type="text" class="form-control" id="option1" name="option1" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="option2" class="form-label">Option 2</label>
-                                <input type="text" class="form-control" id="option2" name="option2" required>
-                            </div>
-                        </div>
-
-                        {# Answer options - second row #}
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="option3" class="form-label">Option 3</label>
-                                <input type="text" class="form-control" id="option3" name="option3" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="option4" class="form-label">Option 4</label>
-                                <input type="text" class="form-control" id="option4" name="option4" required>
-                            </div>
-                        </div>
-
-                        {# Correct answer and difficulty selection #}
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <label for="correct_answer" class="form-label">Correct Answer</label>
-                                <select class="form-select" id="correct_answer" name="correct_answer" required>
-                                    <option value="" selected disabled>Select correct option</option>
-                                    <option value="1">Option 1</option>
-                                    <option value="2">Option 2</option>
-                                    <option value="3">Option 3</option>
-                                    <option value="4">Option 4</option>
+                            <div class="col-md-4">
+                                <label for="subject" class="form-label">Subject</label>
+                                <select class="form-select" id="subject" name="subject" required>
+                                    <option value="" selected disabled>Select a subject</option>
+                                    {% for subject in subjects %}
+                                        <option value="{{ subject.id }}">{{ subject.name }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
+                                <label for="question_type" class="form-label">Question Type</label>
+                                <select class="form-select" id="question_type" name="question_type" required>
+                                    <option value="mcq" selected>Multiple Choice</option>
+                                    <option value="fill_in_blanks">Fill in the Blanks</option>
+                                    <option value="match_columns">Match the Columns</option>
+                                    <option value="assertion_reason">Assertion Reason</option>
+                                    <option value="case_based">Case Based</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
                                 <label for="difficulty" class="form-label">Difficulty Level</label>
                                 <select class="form-select" id="difficulty" name="difficulty" required>
                                     <option value="" selected disabled>Select difficulty</option>
@@ -178,186 +76,652 @@
                             </div>
                         </div>
 
-                        {# Submit button #}
-                        <button type="submit" class="btn btn-primary">Add Question</button>
-                    </form>
+                        {# MCQ Question Type #}
+                        <div id="mcq-container" class="question-type-container">
+                            <div class="mb-3">
+                                <label for="question_text" class="form-label">Question Text</label>
+                                <textarea class="form-control" id="question_text" name="question_text" rows="3"></textarea>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="option1" class="form-label">Option 1</label>
+                                    <input type="text" class="form-control" id="option1" name="option1">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="option2" class="form-label">Option 2</label>
+                                    <input type="text" class="form-control" id="option2" name="option2">
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="option3" class="form-label">Option 3</label>
+                                    <input type="text" class="form-control" id="option3" name="option3">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="option4" class="form-label">Option 4</label>
+                                    <input type="text" class="form-control" id="option4" name="option4">
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="correct_answer" class="form-label">Correct Answer</label>
+                                <select class="form-select" id="correct_answer" name="correct_answer">
+                                    <option value="" selected disabled>Select correct option</option>
+                                    <option value="1">Option 1</option>
+                                    <option value="2">Option 2</option>
+                                    <option value="3">Option 3</option>
+                                    <option value="4">Option 4</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        {# Fill in the Blanks Question Type #}
+                        <div id="fill-in-blanks-container" class="question-type-container">
+                            <div class="mb-3">
+                                <label for="fitb_text" class="form-label">Question Text</label>
+                                <textarea class="form-control" id="fitb_text" name="fitb_text" rows="3"
+                                    placeholder="Enter text with [blank] placeholders for blanks"></textarea>
+                                <small class="form-text text-muted">
+                                    Use [blank] in your text where you want a blank to appear.
+                                    Then provide the correct answers below.
+                                </small>
+                            </div>
+
+                            <div class="blanks-container">
+                                <h6>Correct Answers for Blanks</h6>
+                                <div id="blanks-list">
+                                    <div class="blank-item">
+                                        <div class="input-group">
+                                            <span class="input-group-text">Blank 1</span>
+                                            <input type="text" class="form-control" name="blank1" placeholder="Correct answer">
+                                            <button type="button" class="btn btn-outline-danger remove-blank-btn">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary add-item-btn" id="add-blank-btn">
+                                    <i class="fas fa-plus"></i> Add Another Blank
+                                </button>
+                            </div>
+                        </div>
+
+                        {# Match the Columns Question Type #}
+                        <div id="match-columns-container" class="question-type-container">
+                            <div class="columns-container">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <h6>Column A</h6>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Column B</h6>
+                                    </div>
+                                </div>
+
+                                <div id="columns-list">
+                                    <div class="column-item">
+                                        <div class="row">
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control" name="column_a_1" placeholder="Column A item">
+                                            </div>
+                                            <div class="col-md-5">
+                                                <input type="text" class="form-control" name="column_b_1" placeholder="Column B item">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <button type="button" class="btn btn-outline-danger remove-column-btn">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button type="button" class="btn btn-outline-primary add-item-btn" id="add-column-btn">
+                                    <i class="fas fa-plus"></i> Add Another Pair
+                                </button>
+                            </div>
+                        </div>
+
+                        {# Assertion Reason Question Type #}
+                        <div id="assertion-reason-container" class="question-type-container">
+                            <div class="mb-3">
+                                <label for="assertion" class="form-label">Assertion</label>
+                                <textarea class="form-control" id="assertion" name="assertion" rows="2"
+                                    placeholder="Enter the assertion statement"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="reason" class="form-label">Reason</label>
+                                <textarea class="form-control" id="reason" name="reason" rows="2"
+                                    placeholder="Enter the reason statement"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="ar_correct_option" class="form-label">Correct Option</label>
+                                <select class="form-select" id="ar_correct_option" name="ar_correct_option">
+                                    <option value="" selected disabled>Select correct option</option>
+                                    <option value="a">a) Both Assertion and Reason are true and Reason is the correct explanation of Assertion</option>
+                                    <option value="b">b) Both Assertion and Reason are true but Reason is not the correct explanation of Assertion</option>
+                                    <option value="c">c) Assertion is true but Reason is false</option>
+                                    <option value="d">d) Assertion is false but Reason is true</option>
+                                    <option value="e">e) Both Assertion and Reason are false</option>
+                                </select>
+                            </div>
+                        </div>
+
+                            {# Case Based Question Type #}
+                            <div id="case-based-container" class="question-type-container">
+                                <div class="mb-3">
+                                    <label for="case_content" class="form-label">Case/Passage</label>
+                                    <textarea class="form-control" id="case_content" name="case_content" rows="5"
+                                        placeholder="Enter the case study, passage, or scenario text"></textarea>
+                                </div>
+
+                                <div class="case-questions-container">
+                                    <h6>Questions based on this case</h6>
+                                    <div id="case-questions-list">
+                                        <div class="case-question-item">
+                                            <div class="mb-3">
+                                                <label for="case_question_1" class="form-label">Question 1</label>
+                                                <input type="text" class="form-control" id="case_question_1" name="case_question_1" placeholder="Enter question text">
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <input type="text" class="form-control" name="case_q1_option1" placeholder="Option 1">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <input type="text" class="form-control" name="case_q1_option2" placeholder="Option 2">
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md-6">
+                                                    <input type="text" class="form-control" name="case_q1_option3" placeholder="Option 3">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <input type="text" class="form-control" name="case_q1_option4" placeholder="Option 4">
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label for="case_q1_correct" class="form-label">Correct Answer</label>
+                                                <select class="form-select" id="case_q1_correct" name="case_q1_correct">
+                                                    <option value="" selected disabled>Select correct option</option>
+                                                    <option value="1">Option 1</option>
+                                                    <option value="2">Option 2</option>
+                                                    <option value="3">Option 3</option>
+                                                    <option value="4">Option 4</option>
+                                                </select>
+                                            </div>
+                                            <button type="button" class="btn btn-outline-danger btn-sm remove-case-question-btn">
+                                                <i class="fas fa-times"></i> Remove Question
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-primary add-item-btn" id="add-case-question-btn">
+                                        <i class="fas fa-plus"></i> Add Another Question
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-primary">Add Question</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+    </div>
+
+{% if session.get('user_type') == 'admin' %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Question Database</h5>
+            </div>
+            <div class="card-body">
+                <!-- Admin Filter Form -->
+                <form action="{{ url_for('add_question') }}" method="GET" class="mb-4">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label for="subject_filter" class="form-label">Subject</label>
+                            <select class="form-select" id="subject_filter" name="subject_filter">
+                                <option value="">All Subjects</option>
+                                {% for subject in subjects %}
+                                    <option value="{{ subject.id }}" {% if request.args.get('subject_filter') == subject.id %}selected{% endif %}>
+                                        {{ subject.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="difficulty_filter" class="form-label">Difficulty</label>
+                            <select class="form-select" id="difficulty_filter" name="difficulty_filter">
+                                <option value="">All Difficulties</option>
+                                <option value="easy" {% if request.args.get('difficulty_filter') == 'easy' %}selected{% endif %}>Easy</option>
+                                <option value="medium" {% if request.args.get('difficulty_filter') == 'medium' %}selected{% endif %}>Medium</option>
+                                <option value="hard" {% if request.args.get('difficulty_filter') == 'hard' %}selected{% endif %}>Hard</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="question_type_filter" class="form-label">Question Type</label>
+                            <select class="form-select" id="question_type_filter" name="question_type_filter">
+                                <option value="">All Types</option>
+                                <option value="mcq" {% if request.args.get('question_type_filter') == 'mcq' %}selected{% endif %}>Multiple Choice</option>
+                                <option value="fill_in_blanks" {% if request.args.get('question_type_filter') == 'fill_in_blanks' %}selected{% endif %}>Fill in the Blanks</option>
+                                <option value="match_columns" {% if request.args.get('question_type_filter') == 'match_columns' %}selected{% endif %}>Match the Columns</option>
+                                <option value="assertion_reason" {% if request.args.get('question_type_filter') == 'assertion_reason' %}selected{% endif %}>Assertion Reason</option>
+                                <option value="case_based" {% if request.args.get('question_type_filter') == 'case_based' %}selected{% endif %}>Case Based</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label for="created_by_filter" class="form-label">Created By</label>
+                            <input type="text" class="form-control" id="created_by_filter" name="created_by_filter"
+                                   value="{{ request.args.get('created_by_filter', '') }}" placeholder="Search by name or email">
+                        </div>
+                        <div class="col-md-12 mt-2">
+                            <button type="submit" class="btn btn-primary">Filter</button>
+                            <a href="{{ url_for('add_question') }}" class="btn btn-outline-secondary">Reset</a>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- Questions Table -->
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Question</th>
+                                <th>Subject</th>
+                                <th>Type</th>
+                                <th>Difficulty</th>
+                                <th>Created By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if admin_questions %}
+                                {% for question in admin_questions %}
+                                    <tr>
+                                        <td>
+                                            {% if question.question_type == 'mcq' %}
+                                                {{ question.text|truncate(50) }}
+                                            {% elif question.question_type == 'fill_in_blanks' %}
+                                                {{ question.text|truncate(50) }}
+                                            {% elif question.question_type == 'match_columns' %}
+                                                <em>Column matching question</em>
+                                            {% elif question.question_type == 'assertion_reason' %}
+                                                <strong>Assertion:</strong> {{ question.assertion|truncate(50) }}
+                                            {% elif question.question_type == 'case_based' %}
+                                                <em>Case-based question</em>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ question.subject_name }}</td>
+                                        <td>
+                                            {% if question.question_type == 'mcq' %}
+                                                Multiple Choice
+                                            {% elif question.question_type == 'fill_in_blanks' %}
+                                                Fill in the Blanks
+                                            {% elif question.question_type == 'match_columns' %}
+                                                Match the Columns
+                                            {% elif question.question_type == 'assertion_reason' %}
+                                                Assertion Reason
+                                            {% elif question.question_type == 'case_based' %}
+                                                Case Based
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if question.difficulty == 'easy' %}bg-success{% elif question.difficulty == 'medium' %}bg-warning{% elif question.difficulty == 'hard' %}bg-danger{% endif %}">
+                                                {{ question.difficulty|capitalize }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {{ question.created_by_name }}
+                                            <small class="d-block text-muted">{{ question.created_by_type|capitalize }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-sm btn-outline-primary view-question-btn"
+                                                        data-bs-toggle="modal" data-bs-target="#viewQuestionModal"
+                                                        data-question-id="{{ question.id }}"
+                                                        data-question-text="{{ question.text }}"
+                                                        data-question-type="{{ question.question_type }}">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <a href="{{ url_for('edit_question', question_id=question.id) }}" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{{ url_for('delete_question', question_id=question.id) }}" class="btn btn-sm btn-outline-danger"
+                                                   onclick="return confirm('Are you sure you want to delete this question?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center">No questions found.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if total_pages > 1 %}
+                    <nav aria-label="Question database pagination">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('add_question', page=current_page-1, subject_filter=request.args.get('subject_filter', ''), difficulty_filter=request.args.get('difficulty_filter', ''), created_by_filter=request.args.get('created_by_filter', ''), question_type_filter=request.args.get('question_type_filter', '')) }}">
+                                    Previous
+                                </a>
+                            </li>
+                            {% for i in range(1, total_pages + 1) %}
+                                <li class="page-item {% if i == current_page %}active{% endif %}">
+                                    <a class="page-link" href="{{ url_for('add_question', page=i, subject_filter=request.args.get('subject_filter', ''), difficulty_filter=request.args.get('difficulty_filter', ''), created_by_filter=request.args.get('created_by_filter', ''), question_type_filter=request.args.get('question_type_filter', '')) }}">
+                                        {{ i }}
+                                    </a>
+                                </li>
+                            {% endfor %}
+                            <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
+                                <a class="page-link" href="{{ url_for('add_question', page=current_page+1, subject_filter=request.args.get('subject_filter', ''), difficulty_filter=request.args.get('difficulty_filter', ''), created_by_filter=request.args.get('created_by_filter', ''), question_type_filter=request.args.get('question_type_filter', '')) }}">
+                                    Next
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Question Modal -->
+<div class="modal fade" id="viewQuestionModal" tabindex="-1" aria-labelledby="viewQuestionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewQuestionModalLabel">Question Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="questionModalBody">
+                <!-- Question details will be loaded here dynamically -->
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if session.get('user_type') == 'teacher' %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Your Questions</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Question</th>
+                                <th>Subject</th>
+                                <th>Type</th>
+                                <th>Difficulty</th>
+                                <th>Created At</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if teacher_questions %}
+                                {% for question in teacher_questions %}
+                                    <tr>
+                                        <td>
+                                            {% if question.question_type == 'mcq' %}
+                                                {{ question.text|truncate(50) }}
+                                            {% elif question.question_type == 'fill_in_blanks' %}
+                                                {{ question.text|truncate(50) }}
+                                            {% elif question.question_type == 'match_columns' %}
+                                                <em>Column matching question</em>
+                                            {% elif question.question_type == 'assertion_reason' %}
+                                                <strong>Assertion:</strong> {{ question.assertion|truncate(50) }}
+                                            {% elif question.question_type == 'case_based' %}
+                                                <em>Case-based question</em>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ question.subject_name }}</td>
+                                        <td>
+                                            {% if question.question_type == 'mcq' %}
+                                                Multiple Choice
+                                            {% elif question.question_type == 'fill_in_blanks' %}
+                                                Fill in the Blanks
+                                            {% elif question.question_type == 'match_columns' %}
+                                                Match the Columns
+                                            {% elif question.question_type == 'assertion_reason' %}
+                                                Assertion Reason
+                                            {% elif question.question_type == 'case_based' %}
+                                                Case Based
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if question.difficulty == 'easy' %}bg-success{% elif question.difficulty == 'medium' %}bg-warning{% elif question.difficulty == 'hard' %}bg-danger{% endif %}">
+                                                {{ question.difficulty|capitalize }}
+                                            </span>
+                                        </td>
+                                        <td>{{ question.created_at }}</td>
+                                        <td>
+                                            <div class="btn-group">
+                                                <button type="button" class="btn btn-sm btn-outline-primary view-question-btn"
+                                                        data-bs-toggle="modal" data-bs-target="#viewQuestionModal"
+                                                        data-question-id="{{ question.id }}"
+                                                        data-question-text="{{ question.text }}"
+                                                        data-question-type="{{ question.question_type }}">
+                                                    <i class="fas fa-eye"></i>
+                                                </button>
+                                                <a href="{{ url_for('edit_question', question_id=question.id) }}" class="btn btn-sm btn-outline-secondary">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{{ url_for('delete_question', question_id=question.id) }}" class="btn btn-sm btn-outline-danger"
+                                                   onclick="return confirm('Are you sure you want to delete this question?')">
+                                                    <i class="fas fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center">You haven't created any questions yet.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
+</div>
+{% endif %}
 
-    {# Conditional sections based on user type #}
-    {% if session.get('user_type') == 'admin' %}
-        {# Admin-only: Question Database Section #}
-        <div class="row">
-            <div class="col-12 mb-4">
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Question Database</h5>
-                        <div>
-                            <select class="form-select form-select-sm d-inline-block w-auto me-2">
-                                <option value="">All Subjects</option>
-                                {% for subject in subjects %}
-                                    <option value="{{ subject.id }}">{{ subject.name }}</option>
-                                {% endfor %}
-                            </select>
-                            <button class="btn btn-sm btn-outline-primary">Filter</button>
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
+<script>
+    $(document).ready(function() {
+        // Show/hide question type containers based on selection
+        function showQuestionTypeContainer() {
+            const selectedType = $('#question_type').val();
+            $('.question-type-container').hide();
+
+            if (selectedType === 'mcq') {
+                $('#mcq-container').show();
+            } else if (selectedType === 'fill_in_blanks') {
+                $('#fill-in-blanks-container').show();
+            } else if (selectedType === 'match_columns') {
+                $('#match-columns-container').show();
+            } else if (selectedType === 'assertion_reason') {
+                $('#assertion-reason-container').show();
+            } else if (selectedType === 'case_based') {
+                $('#case-based-container').show();
+            }
+        }
+
+        // Initialize by showing the default question type container
+        showQuestionTypeContainer();
+
+        // Update when the question type changes
+        $('#question_type').change(showQuestionTypeContainer);
+
+        // Fill in the Blanks - Add/Remove functionality
+        let blankCounter = 2;
+
+        $('#add-blank-btn').click(function() {
+            const newBlank = `
+                <div class="blank-item">
+                    <div class="input-group">
+                        <span class="input-group-text">Blank ${blankCounter}</span>
+                        <input type="text" class="form-control" name="blank${blankCounter}" placeholder="Correct answer">
+                        <button type="button" class="btn btn-outline-danger remove-blank-btn">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            $('#blanks-list').append(newBlank);
+            blankCounter++;
+        });
+
+        $(document).on('click', '.remove-blank-btn', function() {
+            if ($('.blank-item').length > 1) {
+                $(this).closest('.blank-item').remove();
+            } else {
+                alert('You need at least one blank answer field.');
+            }
+        });
+
+        // Match Columns - Add/Remove functionality
+        let columnCounter = 2;
+
+        $('#add-column-btn').click(function() {
+            const newColumn = `
+                <div class="column-item">
+                    <div class="row">
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" name="column_a_${columnCounter}" placeholder="Column A item">
+                        </div>
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" name="column_b_${columnCounter}" placeholder="Column B item">
+                        </div>
+                        <div class="col-md-2">
+                            <button type="button" class="btn btn-outline-danger remove-column-btn">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Question</th>
-                                        <th>Subject</th>
-                                        <th>Difficulty</th>
-                                        <th>Created By</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4">
-                                            <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
-                                            <p>No questions found. Add your first question above.</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                </div>
+            `;
+            $('#columns-list').append(newColumn);
+            columnCounter++;
+        });
+
+        $(document).on('click', '.remove-column-btn', function() {
+            if ($('.column-item').length > 1) {
+                $(this).closest('.column-item').remove();
+            } else {
+                alert('You need at least one pair of matching items.');
+            }
+        });
+
+        // Case-based questions - Add/Remove functionality
+        let caseQuestionCounter = 2;
+
+        $('#add-case-question-btn').click(function() {
+            const newCaseQuestion = `
+                <div class="case-question-item">
+                    <div class="mb-3">
+                        <label for="case_question_${caseQuestionCounter}" class="form-label">Question ${caseQuestionCounter}</label>
+                        <input type="text" class="form-control" id="case_question_${caseQuestionCounter}" name="case_question_${caseQuestionCounter}" placeholder="Enter question text">
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option1" placeholder="Option 1">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option2" placeholder="Option 2">
                         </div>
                     </div>
+                    <div class="row mb-2">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option3" placeholder="Option 3">
+                        </div>
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option4" placeholder="Option 4">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="case_q${caseQuestionCounter}_correct" class="form-label">Correct Answer</label>
+                        <select class="form-select" id="case_q${caseQuestionCounter}_correct" name="case_q${caseQuestionCounter}_correct">
+                            <option value="" selected disabled>Select correct option</option>
+                            <option value="1">Option 1</option>
+                            <option value="2">Option 2</option>
+                            <option value="3">Option 3</option>
+                            <option value="4">Option 4</option>
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-case-question-btn">
+                        <i class="fas fa-times"></i> Remove Question
+                    </button>
+                </div>
+            `;
+            $('#case-questions-list').append(newCaseQuestion);
+            caseQuestionCounter++;
+        });
+
+        $(document).on('click', '.remove-case-question-btn', function() {
+            if ($('.case-question-item').length > 1) {
+                $(this).closest('.case-question-item').remove();
+            } else {
+                alert('You need at least one question for the case.');
+            }
+        });
+
+        // Handle view question modal
+        $('.view-question-btn').click(function() {
+            const questionId = $(this).data('question-id');
+
+        // Display loading state
+        $('#questionModalBody').html(`
+            <div class="text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
-        </div>
-    {% else %}
-        {# Teacher-only: My Questions Section #}
-        <div class="row">
-            <div class="col-12 mb-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0">My Questions</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Question</th>
-                                        <th>Subject</th>
-                                        <th>Difficulty</th>
-                                        <th>Created Date</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% if teacher_questions and teacher_questions|length > 0 %}
-                                        {% for question in teacher_questions %}
-                                            <tr>
-                                                <td>{{ question.text|truncate(50) }}</td>
-                                                <td>{{ question.subject_name }}</td>
-                                                <td>
-                                                    {% if question.difficulty == 'easy' %}
-                                                        <span class="badge bg-success">Easy</span>
-                                                    {% elif question.difficulty == 'medium' %}
-                                                        <span class="badge bg-warning">Medium</span>
-                                                    {% elif question.difficulty == 'hard' %}
-                                                        <span class="badge bg-danger">Hard</span>
-                                                    {% else %}
-                                                        <span class="badge bg-secondary">{{ question.difficulty }}</span>
-                                                    {% endif %}
-                                                </td>
-                                                <td>{{ question.created_at }}</td>
-                                                <td>
-                                                    <div class="btn-group btn-group-sm" role="group">
-                                                        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#viewQuestionModal{{ question.id }}">
-                                                            <i class="fas fa-eye"></i>
-                                                        </button>
-                                                        <a href="{{ url_for('edit_question', question_id=question.id) }}" class="btn btn-outline-secondary">
-                                                            <i class="fas fa-edit"></i>
-                                                        </a>
-                                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteQuestionModal{{ question.id }}">
-                                                            <i class="fas fa-trash"></i>
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        {% endfor %}
-                                    {% else %}
-                                        <tr>
-                                            <td colspan="5" class="text-center py-4">
-                                                <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
-                                                <p>You haven't created any questions yet.</p>
-                                            </td>
-                                        </tr>
-                                    {% endif %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        `);
+         $('#viewQuestionModalLabel').text('Question Metadata');
 
-        {# View Question Modal Dialogs #}
-        {% if teacher_questions and teacher_questions|length > 0 %}
-            {% for question in teacher_questions %}
-                <div class="modal fade" id="viewQuestionModal{{ question.id }}" tabindex="-1" aria-labelledby="viewQuestionModalLabel{{ question.id }}" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="viewQuestionModalLabel{{ question.id }}">View Question</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Question:</label>
-                                    <p>{{ question.text }}</p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Subject:</label>
-                                    <p>{{ question.subject_name }}</p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Difficulty:</label>
-                                    <p>{{ question.difficulty|capitalize }}</p>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Created On:</label>
-                                    <p>{{ question.created_at }}</p>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        {# Delete Question Modal Dialogs #}
-        {% if teacher_questions and teacher_questions|length > 0 %}
-            {% for question in teacher_questions %}
-                <div class="modal fade" id="deleteQuestionModal{{ question.id }}" tabindex="-1" aria-labelledby="deleteQuestionModalLabel{{ question.id }}" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="deleteQuestionModalLabel{{ question.id }}">Delete Question</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p>Are you sure you want to delete this question?</p>
-                                <p class="font-italic">"{{ question.text|truncate(100) }}"</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <a href="{{ url_for('delete_question', question_id=question.id) }}" class="btn btn-danger">Delete</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endif %}
+        // Make AJAX request to get question metadata
+        $.ajax({
+            url: '/get_question_metadata/' + questionId,
+            type: 'GET',
+            success: function(data) {
+                // Simply insert the HTML response into the modal body
+                $('#questionModalBody').html(data);
+            },
+            error: function(error) {
+                $('#questionModalBody').html('<div class="alert alert-danger">Error loading question metadata.</div>');
+            }
+        });
+        });
+    });
+</script>
+{% endblock %}
 {% endblock %}

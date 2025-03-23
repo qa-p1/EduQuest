@@ -28,34 +28,59 @@
                     </div>
 
                     <div class="mb-3">
-                        <label for="question_text" class="form-label">Question Text</label>
-                        <textarea class="form-control" id="question_text" name="question_text" rows="3" required>{{ question.text }}</textarea>
+                        <label for="question_type" class="form-label">Question Type</label>
+                        <select class="form-select" id="question_type" name="question_type" disabled>
+                            <option value="mcq" {% if question.question_type == "mcq" %}selected{% endif %}>Multiple Choice Question</option>
+                            <option value="fill_in_blanks" {% if question.question_type == "fill_in_blanks" %}selected{% endif %}>Fill in the Blanks</option>
+                            <option value="match_columns" {% if question.question_type == "match_columns" %}selected{% endif %}>Match the Columns</option>
+                            <option value="assertion_reason" {% if question.question_type == "assertion_reason" %}selected{% endif %}>Assertion and Reason</option>
+                            <option value="case_based" {% if question.question_type == "case_based" %}selected{% endif %}>Case Based Questions</option>
+                        </select>
+                        <input type="hidden" name="question_type" value="{{ question.question_type }}">
+                        <small class="form-text text-muted">Question type cannot be changed after creation.</small>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="option1" class="form-label">Option 1</label>
-                            <input type="text" class="form-control" id="option1" name="option1" value="{{ question.options.1 }}" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label for="option2" class="form-label">Option 2</label>
-                            <input type="text" class="form-control" id="option2" name="option2" value="{{ question.options.2 }}" required>
-                        </div>
+                    <div class="mb-3">
+                        <label for="difficulty" class="form-label">Difficulty Level</label>
+                        <select class="form-select" id="difficulty" name="difficulty" required>
+                            <option value="" disabled>Select difficulty</option>
+                            <option value="easy" {% if question.difficulty == "easy" %}selected{% endif %}>Easy</option>
+                            <option value="medium" {% if question.difficulty == "medium" %}selected{% endif %}>Medium</option>
+                            <option value="hard" {% if question.difficulty == "hard" %}selected{% endif %}>Hard</option>
+                        </select>
                     </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="option3" class="form-label">Option 3</label>
-                            <input type="text" class="form-control" id="option3" name="option3" value="{{ question.options.3 }}" required>
+                    <!-- MCQ Question Fields -->
+                    {% if question.question_type == "mcq" %}
+                    <div id="mcq_fields">
+                        <div class="mb-3">
+                            <label for="question_text" class="form-label">Question Text</label>
+                            <textarea class="form-control" id="question_text" name="question_text" rows="3" required>{{ question.text }}</textarea>
                         </div>
-                        <div class="col-md-6">
-                            <label for="option4" class="form-label">Option 4</label>
-                            <input type="text" class="form-control" id="option4" name="option4" value="{{ question.options.4 }}" required>
-                        </div>
-                    </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="option1" class="form-label">Option 1</label>
+                                <input type="text" class="form-control" id="option1" name="option1" value="{{ question.options.1 }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="option2" class="form-label">Option 2</label>
+                                <input type="text" class="form-control" id="option2" name="option2" value="{{ question.options.2 }}" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="option3" class="form-label">Option 3</label>
+                                <input type="text" class="form-control" id="option3" name="option3" value="{{ question.options.3 }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="option4" class="form-label">Option 4</label>
+                                <input type="text" class="form-control" id="option4" name="option4" value="{{ question.options.4 }}" required>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
                             <label for="correct_answer" class="form-label">Correct Answer</label>
                             <select class="form-select" id="correct_answer" name="correct_answer" required>
                                 <option value="" disabled>Select correct option</option>
@@ -65,16 +90,125 @@
                                 <option value="4" {% if question.correct_answer == "4" %}selected{% endif %}>Option 4</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label for="difficulty" class="form-label">Difficulty Level</label>
-                            <select class="form-select" id="difficulty" name="difficulty" required>
-                                <option value="" disabled>Select difficulty</option>
-                                <option value="easy" {% if question.difficulty == "easy" %}selected{% endif %}>Easy</option>
-                                <option value="medium" {% if question.difficulty == "medium" %}selected{% endif %}>Medium</option>
-                                <option value="hard" {% if question.difficulty == "hard" %}selected{% endif %}>Hard</option>
+                    </div>
+                    {% endif %}
+
+                    <!-- Fill in the Blanks Fields -->
+                    {% if question.question_type == "fill_in_blanks" %}
+                    <div id="fitb_fields">
+                        <div class="mb-3">
+                            <label for="fitb_text" class="form-label">Question Text</label>
+                            <textarea class="form-control" id="fitb_text" name="fitb_text" rows="3" required>{{ question.text }}</textarea>
+                            <small class="form-text text-muted">type " [blank] "  to mark blanks in the text.</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Answers for Blanks</label>
+                            <div id="blanks_container">
+                                {% for blank in question.blanks %}
+                                <div class="input-group mb-2">
+                                    <span class="input-group-text">Blank {{ loop.index }}</span>
+                                    <input type="text" class="form-control" name="blank{{ loop.index }}" value="{{ blank }}" required>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Match Columns Fields -->
+                    {% if question.question_type == "match_columns" %}
+                    <div id="match_columns_fields">
+                        <h5 class="card-title mb-3">Match the Columns</h5>
+                        <div id="columns_container">
+                            {% for key, value in question.column_a.items() %}
+                            <div class="row mb-2 column-pair">
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" name="column_a_{{ key }}" placeholder="Column A Item" value="{{ value }}" required>
+                                </div>
+                                <div class="col-md-5">
+                                    <input type="text" class="form-control" name="column_b_{{ key }}" placeholder="Column B Item" value="{{ question.column_b[key] }}" required>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Assertion Reason Fields -->
+                    {% if question.question_type == "assertion_reason" %}
+                    <div id="assertion_reason_fields">
+                        <div class="mb-3">
+                            <label for="assertion" class="form-label">Assertion</label>
+                            <textarea class="form-control" id="assertion" name="assertion" rows="2" required>{{ question.assertion }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="reason" class="form-label">Reason</label>
+                            <textarea class="form-control" id="reason" name="reason" rows="2" required>{{ question.reason }}</textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="ar_correct_option" class="form-label">Correct Option</label>
+                            <select class="form-select" id="ar_correct_option" name="ar_correct_option" required>
+                                <option value="" disabled>Select correct option</option>
+                                <option value="a" {% if question.ar_correct_option == "a" %}selected{% endif %}>A: Both Assertion and Reason are true and Reason is the correct explanation of Assertion</option>
+                                <option value="b" {% if question.ar_correct_option == "b" %}selected{% endif %}>B: Both Assertion and Reason are true but Reason is not the correct explanation of Assertion</option>
+                                <option value="c" {% if question.ar_correct_option == "c" %}selected{% endif %}>C: Assertion is true but Reason is false</option>
+                                <option value="d" {% if question.ar_correct_option == "d" %}selected{% endif %}>D: Assertion is false but Reason is true</option>
+                                <option value="e" {% if question.ar_correct_option == "e" %}selected{% endif %}>E: Both Assertion and Reason are false</option>
                             </select>
                         </div>
                     </div>
+                    {% endif %}
+
+                    <!-- Case Based Fields -->
+                    {% if question.question_type == "case_based" %}
+                    <div id="case_based_fields">
+                        <div class="mb-3">
+                            <label for="case_content" class="form-label">Case/Passage Content</label>
+                            <textarea class="form-control" id="case_content" name="case_content" rows="4" required>{{ question.case_content }}</textarea>
+                        </div>
+
+                        <div id="case_questions_container">
+                            {% for case_q in question.case_questions %}
+                            <div class="card mb-3 case-question">
+                                <div class="card-body">
+                                    <h6 class="card-subtitle mb-2">Question {{ loop.index }}</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Question Text</label>
+                                        <textarea class="form-control" name="case_question_{{ loop.index }}" rows="2" required>{{ case_q.text }}</textarea>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" name="case_q{{ loop.index }}_option1" placeholder="Option 1" value="{{ case_q.options.1 }}" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" name="case_q{{ loop.index }}_option2" placeholder="Option 2" value="{{ case_q.options.2 }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-2">
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" name="case_q{{ loop.index }}_option3" placeholder="Option 3" value="{{ case_q.options.3 }}" required>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" name="case_q{{ loop.index }}_option4" placeholder="Option 4" value="{{ case_q.options.4 }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label class="form-label">Correct Answer</label>
+                                        <select class="form-select" name="case_q{{ loop.index }}_correct" required>
+                                            <option value="" disabled>Select correct option</option>
+                                            <option value="1" {% if case_q.correct_answer == "1" %}selected{% endif %}>Option 1</option>
+                                            <option value="2" {% if case_q.correct_answer == "2" %}selected{% endif %}>Option 2</option>
+                                            <option value="3" {% if case_q.correct_answer == "3" %}selected{% endif %}>Option 3</option>
+                                            <option value="4" {% if case_q.correct_answer == "4" %}selected{% endif %}>Option 4</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
 
                     <div class="d-flex justify-content-between">
                         <a href="{{ url_for('add_question') }}" class="btn btn-secondary">Cancel</a>
