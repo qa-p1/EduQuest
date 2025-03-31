@@ -25,7 +25,7 @@
                 </div>
             </div>
             <div class="card-footer bg-transparent border-0">
-                <a href="{{ url_for('manage_students') }}" class="text-white">Manage Students <i class="fas fa-arrow-right ms-1"></i></a>
+                <a href="{{ url_for('teacher.manage_students') }}" class="text-white">Manage Students <i class="fas fa-arrow-right ms-1"></i></a>
             </div>
         </div>
     </div>
@@ -44,7 +44,7 @@
                 </div>
             </div>
             <div class="card-footer bg-transparent border-0">
-                <a href="{{ url_for('generate_exam') }}" class="text-white">Create Exam <i class="fas fa-arrow-right ms-1"></i></a>
+                <a href="{{ url_for('teacher.generate_exam') }}" class="text-white">Create Exam <i class="fas fa-arrow-right ms-1"></i></a>
             </div>
         </div>
     </div>
@@ -63,7 +63,7 @@
                 </div>
             </div>
             <div class="card-footer bg-transparent border-0">
-                <a href="{{ url_for('submissions') }}" class="text-dark">View All <i class="fas fa-arrow-right ms-1"></i></a>
+                <a href="{{ url_for('teacher.submissions') }}" class="text-dark">View All <i class="fas fa-arrow-right ms-1"></i></a>
             </div>
         </div>
     </div>
@@ -110,16 +110,16 @@
             </div>
             <div class="card-body">
                 <div class="list-group">
-                    <a href="{{ url_for('generate_exam') }}" class="list-group-item list-group-item-action">
+                    <a href="{{ url_for('teacher.generate_exam') }}" class="list-group-item list-group-item-action">
                         <i class="fas fa-plus-circle me-2"></i> Create New Exam
                     </a>
-                    <a href="{{ url_for('manage_students') }}" class="list-group-item list-group-item-action">
+                    <a href="{{ url_for('teacher.manage_students') }}" class="list-group-item list-group-item-action">
                         <i class="fas fa-user-plus me-2"></i> Add Student
                     </a>
-                    <a href="{{ url_for('submissions') }}" class="list-group-item list-group-item-action">
+                    <a href="{{ url_for('teacher.submissions') }}" class="list-group-item list-group-item-action">
                         <i class="fas fa-check-circle me-2"></i> Grade Submissions
                     </a>
-                    <a href="{{ url_for('add_question') }}" class="list-group-item list-group-item-action">
+                    <a href="{{ url_for('question.add_question') }}" class="list-group-item list-group-item-action">
                         <i class="fas fa-question me-2"></i> Add Question
                     </a>
                 </div>

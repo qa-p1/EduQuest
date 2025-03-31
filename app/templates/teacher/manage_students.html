@@ -1,0 +1,533 @@
+{% extends "menu.html" %}
+{% block title %}EduQuest - Manage Students{% endblock %}
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4">Manage Students</h1>
+        <p class="lead">Manage student access to exams and review their status.</p>
+    </div>
+</div>
+<div class="container-fluid">
+    <div id="loading-spinner" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="mt-2">Loading exams and students data...</p>
+    </div>
+    <div id="exams-container" class="d-none">
+        <!-- Exams will be loaded here dynamically -->
+    </div>
+
+    <div id="no-exams-message" class="text-center py-5 d-none">
+        <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+        <p>You haven't created any exams yet.</p>
+        <a href="{{ url_for('teacher.generate_exam') }}" class="btn btn-primary mt-3">
+            <i class="fas fa-plus-circle"></i> Create New Exam
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    fetchTeacherExamsAndStudents();
+});
+
+function fetchTeacherExamsAndStudents() {
+    fetch('/teacher/api/exams_and_students')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            document.getElementById('loading-spinner').classList.add('d-none');
+
+            if (data.exams.length === 0) {
+                document.getElementById('no-exams-message').classList.remove('d-none');
+            } else {
+                const examsContainer = document.getElementById('exams-container');
+                examsContainer.classList.remove('d-none');
+
+                // Group students by class and section
+                const studentsByClassSection = {};
+
+                Object.keys(data.students).forEach(email => {
+                    const student = data.students[email];
+                    const key = `${student.class}-${student.section}`;
+
+                    if (!studentsByClassSection[key]) {
+                        studentsByClassSection[key] = [];
+                    }
+
+                    studentsByClassSection[key].push({
+                        email: email,
+                        ...student
+                    });
+                });
+
+                // Render each exam
+                data.exams.forEach((exam, index) => {
+                    const examCard = createExamCard(exam, studentsByClassSection, index);
+                    examsContainer.appendChild(examCard);
+                });
+
+                // Initialize toggles for all switches
+                const switches = document.querySelectorAll('.status-switch');
+                switches.forEach(switchEl => {
+                    switchEl.addEventListener('change', function() {
+                        const studentEmail = this.getAttribute('data-student-email');
+                        const switchId = this.id;
+                        const newStatus = this.checked ? 'active' : 'inactive';
+
+                        // Directly update without confirmation modal
+                        if (studentEmail) {
+                            updateStudentStatus(studentEmail, newStatus, switchId);
+                        }
+                    });
+                });
+
+                // Initialize bulk toggle switches
+                const bulkSwitches = document.querySelectorAll('.bulk-status-switch');
+                bulkSwitches.forEach(switchEl => {
+                    switchEl.addEventListener('change', function() {
+                        const studentEmails = JSON.parse(this.getAttribute('data-student-emails'));
+                        const switchId = this.id;
+                        const newStatus = this.checked ? 'active' : 'inactive';
+                        const targetSelector = this.getAttribute('data-target-switches');
+
+                        // Update all child switches visually
+                        if (targetSelector) {
+                            const childSwitches = document.querySelectorAll(targetSelector);
+                            childSwitches.forEach(childSwitch => {
+                                childSwitch.checked = newStatus === 'active';
+                                const label = childSwitch.nextElementSibling;
+                                if (label) {
+                                    label.textContent = newStatus === 'active' ? 'Active' : 'Inactive';
+                                }
+                            });
+                        }
+
+                        // Send bulk update request
+                        updateBulkStatus(studentEmails, newStatus, switchId);
+                    });
+                });
+
+                // Initialize collapsible sections
+                const collapseToggles = document.querySelectorAll('[data-bs-toggle="collapse"]');
+                collapseToggles.forEach(toggle => {
+                    toggle.addEventListener('click', function() {
+                        const icon = this.querySelector('.collapse-icon');
+                        if (icon) {
+                            icon.classList.toggle('fa-chevron-down');
+                            icon.classList.toggle('fa-chevron-right');
+                        }
+                    });
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+            document.getElementById('loading-spinner').classList.add('d-none');
+            const examsContainer = document.getElementById('exams-container');
+            examsContainer.classList.remove('d-none');
+            examsContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle"></i> Failed to load data. Please try again later.
+                </div>
+            `;
+        });
+}
+
+function createExamCard(exam, studentsByClassSection, examIndex) {
+    const examDiv = document.createElement('div');
+    examDiv.className = 'card mb-4';
+
+    const subjectName = exam.subject_name || 'Subject';
+    const examDate = new Date(exam.exam_date).toLocaleDateString();
+    let examType = exam.exam_type.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const examId = `exam-${examIndex}`;
+    const collapseId = `collapse-${examId}`;
+
+    // Get all students for this exam class
+    const examClass = exam.class.toString();
+    const classStudents = Object.keys(studentsByClassSection)
+        .filter(key => key.startsWith(examClass + '-'))
+        .reduce((acc, key) => {
+            acc[key] = studentsByClassSection[key];
+            return acc;
+        }, {});
+
+    // Get all student emails for this exam
+    const allStudentEmails = [];
+    Object.values(classStudents).forEach(students => {
+        students.forEach(student => {
+            allStudentEmails.push(student.email);
+        });
+    });
+
+    // Calculate if all students are active
+    let allActive = true;
+    Object.values(classStudents).forEach(students => {
+        students.forEach(student => {
+            if (student.status !== 'active') {
+                allActive = false;
+            }
+        });
+    });
+
+    examDiv.innerHTML = `
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+             role="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="true">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-chevron-down me-2 collapse-icon"></i>
+                <h5 class="mb-0">${exam.title}</h5>
+            </div>
+            <div class="form-check form-switch">
+                <input class="form-check-input bulk-status-switch" type="checkbox" role="switch"
+                    id="switch-exam-${examIndex}" ${allActive ? 'checked' : ''}
+                    data-student-emails='${JSON.stringify(allStudentEmails)}'
+                    data-target-switches=".switch-${examId}">
+                <label class="form-check-label text-white" for="switch-exam-${examIndex}">
+                    ${allActive ? 'All Active' : 'Some Inactive'}
+                </label>
+            </div>
+        </div>
+        <div class="collapse show" id="${collapseId}">
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong><i class="fas fa-book"></i> Subject:</strong> ${subjectName}
+                    </div>
+                    <div class="col-md-4">
+                        <strong><i class="fas fa-calendar-alt"></i> Date:</strong> ${examDate}
+                    </div>
+                    <div class="col-md-4">
+                        <strong><i class="fas fa-tasks"></i> Type:</strong> ${examType}
+                    </div>
+                </div>
+
+                <h6 class="mt-4 mb-3"><i class="fas fa-users"></i> Students</h6>
+
+                <div class="accordion" id="accordion-classes-${examId}">
+                    ${generateClassSections(classStudents, examId)}
+                </div>
+            </div>
+        </div>
+    `;
+
+    return examDiv;
+}
+
+function generateClassSections(classStudents, examId) {
+    if (Object.keys(classStudents).length === 0) {
+        return `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> No students found for this exam.
+            </div>
+        `;
+    }
+
+    let accordionItems = '';
+
+    Object.keys(classStudents).sort().forEach((classSection, index) => {
+        const students = classStudents[classSection];
+        const [classId, section] = classSection.split('-');
+        const sectionId = `section-${examId}-${classId}-${section}`;
+        const collapseId = `collapse-${sectionId}`;
+
+        // Check if all students in this section are active
+        const allActive = students.every(student => student.status === 'active');
+
+        // Get all student emails in this section
+        const sectionStudentEmails = students.map(student => student.email);
+
+        accordionItems += `
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="heading-${sectionId}">
+                    <div class="accordion-button d-flex justify-content-between align-items-center"
+                         role="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}"
+                         aria-expanded="${index === 0 ? 'true' : 'false'}" aria-controls="${collapseId}">
+                        <div>
+                            <i class="fas fa-chevron-down me-2 collapse-icon"></i>
+                            Class ${classId} - Section ${section.toUpperCase()} (${students.length} students)
+                        </div>
+                        <div class="form-check form-switch me-3">
+                            <input class="form-check-input bulk-status-switch" type="checkbox" role="switch"
+                                id="switch-${sectionId}" ${allActive ? 'checked' : ''}
+                                data-student-emails='${JSON.stringify(sectionStudentEmails)}'
+                                data-target-switches=".switch-${sectionId}">
+                            <label class="form-check-label" for="switch-${sectionId}">
+                                ${allActive ? 'All Active' : 'Some Inactive'}
+                            </label>
+                        </div>
+                    </div>
+                </h2>
+                <div id="${collapseId}" class="accordion-collapse collapse ${index === 0 ? 'show' : ''}"
+                     aria-labelledby="heading-${sectionId}" data-bs-parent="#accordion-classes-${examId}">
+                    <div class="accordion-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Roll No</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${generateStudentRows(students, sectionId, examId)}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    return accordionItems;
+}
+
+function generateStudentRows(students, sectionId, examId) {
+    if (!students || students.length === 0) {
+        return `
+            <tr>
+                <td colspan="4" class="text-center">No students found for this section</td>
+            </tr>
+        `;
+    }
+
+    let rows = '';
+    students.forEach(student => {
+        const isChecked = student.status === 'active' ? 'checked' : '';
+        const switchId = `switch-${student.email.replace(/[@.]/g, '-')}`;
+
+        rows += `
+            <tr>
+                <td>${student.rollno}</td>
+                <td>${student.name}</td>
+                <td>${student.email}</td>
+                <td>
+                    <div class="form-check form-switch">
+                        <input class="form-check-input status-switch switch-${examId} switch-${sectionId}"
+                               type="checkbox" role="switch"
+                               id="${switchId}" ${isChecked}
+                               data-student-email="${student.email}">
+                        <label class="form-check-label" for="${switchId}">
+                            ${student.status === 'active' ? 'Active' : 'Inactive'}
+                        </label>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+
+    return rows;
+}
+
+function updateStudentStatus(studentEmail, newStatus, switchId) {
+    // Show loading state
+    const switchEl = document.getElementById(switchId);
+    const switchLabel = switchEl.nextElementSibling;
+    const originalLabelText = switchLabel.textContent;
+    switchLabel.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
+    switchEl.disabled = true;
+
+    const encodedEmail = encodeURIComponent(studentEmail);
+
+    fetch('/teacher/api/update_student_status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            student_email: studentEmail,  // Keep original email here
+            status: newStatus
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update the switch status
+            switchEl.checked = newStatus === 'active';
+            switchLabel.textContent = newStatus === 'active' ? 'Active' : 'Inactive';
+
+            // Show success message
+            const successAlert = document.createElement('div');
+            successAlert.className = 'alert alert-success alert-dismissible fade show mt-3';
+            successAlert.setAttribute('role', 'alert');
+            successAlert.innerHTML = `
+                <strong>Success!</strong> ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+            // Find the closest container for the alert
+            const container = switchEl.closest('.accordion-body') || switchEl.closest('.card-body');
+            container.appendChild(successAlert);
+
+            // Remove alert after 3 seconds
+            setTimeout(() => {
+                successAlert.remove();
+            }, 3000);
+
+            // Check if we need to update parent toggles
+            updateParentToggles();
+        } else {
+            throw new Error(data.message || 'Failed to update status');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating status:', error);
+
+        // Reset switch to original state
+        switchEl.checked = newStatus !== 'active';
+
+        // Show error message
+        const errorAlert = document.createElement('div');
+        errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        errorAlert.setAttribute('role', 'alert');
+        errorAlert.innerHTML = `
+            <strong>Error!</strong> Failed to update student status. Please try again.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        // Find the closest container for the alert
+        const container = switchEl.closest('.accordion-body') || switchEl.closest('.card-body');
+        container.appendChild(errorAlert);
+    })
+    .finally(() => {
+        // Enable switch again
+        switchEl.disabled = false;
+        switchLabel.textContent = switchEl.checked ? 'Active' : 'Inactive';
+    });
+    updateParentToggles();
+}
+
+function updateBulkStatus(studentEmails, newStatus, switchId) {
+    // Show loading state
+    const switchEl = document.getElementById(switchId);
+    const switchLabel = switchEl.nextElementSibling;
+    const originalLabelText = switchLabel.textContent;
+    switchLabel.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Updating...';
+    switchEl.disabled = true;
+
+    fetch('/teacher/api/update_bulk_status', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            student_emails: studentEmails,
+            status: newStatus
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            // Update the switch status
+            switchEl.checked = newStatus === 'active';
+            switchLabel.textContent = newStatus === 'active' ? 'All Active' : 'Some Inactive';
+
+            // Show success message
+            const successAlert = document.createElement('div');
+            successAlert.className = 'alert alert-success alert-dismissible fade show mt-3';
+            successAlert.setAttribute('role', 'alert');
+            successAlert.innerHTML = `
+                <strong>Success!</strong> ${data.message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+            // Find the closest container for the alert
+            const container = switchEl.closest('.accordion-body') || switchEl.closest('.card-body');
+            container.appendChild(successAlert);
+
+            // Remove alert after 3 seconds
+            setTimeout(() => {
+                successAlert.remove();
+            }, 3000);
+        } else {
+            throw new Error(data.message || 'Failed to update statuses');
+        }
+    })
+    .catch(error => {
+        console.error('Error updating statuses:', error);
+
+        // Reset switch to original state
+        switchEl.checked = newStatus !== 'active';
+
+        // Show error message
+        const errorAlert = document.createElement('div');
+        errorAlert.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        errorAlert.setAttribute('role', 'alert');
+        errorAlert.innerHTML = `
+            <strong>Error!</strong> Failed to update student statuses. Please try again.
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        `;
+
+        // Find the closest container for the alert
+        const container = switchEl.closest('.accordion-body') || switchEl.closest('.card-body');
+        container.appendChild(errorAlert);
+    })
+    .finally(() => {
+        // Enable switch again
+        switchEl.disabled = false;
+        switchLabel.textContent = newStatus === 'active' ? 'All Active' : 'Some Inactive';
+    });
+}
+
+function updateParentToggles() {
+    // First, update section-level toggles based on individual student switches
+    document.querySelectorAll('.bulk-status-switch[data-target-switches]').forEach(sectionToggle => {
+        const targetSelector = sectionToggle.getAttribute('data-target-switches');
+        if (!targetSelector) return;
+
+        const childSwitches = document.querySelectorAll(targetSelector);
+        if (childSwitches.length === 0) return;
+
+        // Check if all child switches are active
+        const allActive = Array.from(childSwitches).every(switchEl => switchEl.checked);
+
+        // Update the section toggle without triggering its change event
+        sectionToggle.checked = allActive;
+        const label = sectionToggle.nextElementSibling;
+        if (label) {
+            label.textContent = allActive ? 'All Active' : 'Some Inactive';
+        }
+    });
+
+    // Then update exam-level toggles
+    document.querySelectorAll('.bulk-status-switch').forEach(examToggle => {
+        // Only look at top-level switches (those in card headers)
+        if (examToggle.closest('.card-header')) {
+            const targetSelector = examToggle.getAttribute('data-target-switches');
+            if (!targetSelector) return;
+
+            const childSwitches = document.querySelectorAll(targetSelector);
+            if (childSwitches.length === 0) return;
+
+            // Check if all student switches under this exam are active
+            const allActive = Array.from(childSwitches).every(switchEl => switchEl.checked);
+
+            // Update the exam toggle without triggering its change event
+            examToggle.checked = allActive;
+            const label = examToggle.nextElementSibling;
+            if (label) {
+                label.textContent = allActive ? 'All Active' : 'Some Inactive';
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

@@ -43,7 +43,7 @@
                     <h5 class="mb-0">Add New Question</h5>
                 </div>
                 <div class="card-body">
-                    <form action="{{ url_for('add_question') }}" method="POST">
+                    <form action="{{ url_for('question.add_question') }}" method="POST">
                         {# Basic question information #}
                         <div class="row mb-3">
                             <div class="col-md-4">
@@ -72,6 +72,17 @@
                                     <option value="easy">Easy</option>
                                     <option value="medium">Medium</option>
                                     <option value="hard">Hard</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="class" class="form-label">Class</label>
+                                <select class="form-select" id="class" name="class" required>
+                                    <option value="" selected disabled>Select class</option>
+                                    <option value="6">VI</option>
+                                    <option value="7">VII</option>
+                                    <option value="8">VIII</option>
+                                    <option value="9">IX</option>
+                                    <option value="10">X</option>
                                 </select>
                             </div>
                         </div>
@@ -272,7 +283,26 @@
                 </div>
             </div>
     </div>
-
+<div class="modal fade" id="viewQuestionModal" tabindex="-1" aria-labelledby="viewQuestionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewQuestionModalLabel">Question Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="questionModalBody">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% if session.get('user_type') == 'admin' %}
 <div class="row">
     <div class="col-12 mb-4">
@@ -282,7 +312,7 @@
             </div>
             <div class="card-body">
                 <!-- Admin Filter Form -->
-                <form action="{{ url_for('add_question') }}" method="GET" class="mb-4">
+                <form action="{{ url_for('question.add_question') }}" method="GET" class="mb-4">
                     <div class="row g-3 align-items-end">
                         <div class="col-md-3">
                             <label for="subject_filter" class="form-label">Subject</label>
@@ -322,7 +352,7 @@
                         </div>
                         <div class="col-md-12 mt-2">
                             <button type="submit" class="btn btn-primary">Filter</button>
-                            <a href="{{ url_for('add_question') }}" class="btn btn-outline-secondary">Reset</a>
+                            <a href="{{ url_for('question.add_question') }}" class="btn btn-outline-secondary">Reset</a>
                         </div>
                     </div>
                 </form>
@@ -389,10 +419,10 @@
                                                         data-question-type="{{ question.question_type }}">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
-                                                <a href="{{ url_for('edit_question', question_id=question.id) }}" class="btn btn-sm btn-outline-secondary">
+                                                <a href="{{ url_for('question.edit_question', question_id=question.id) }}" class="btn btn-sm btn-outline-secondary">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <a href="{{ url_for('delete_question', question_id=question.id) }}" class="btn btn-sm btn-outline-danger"
+                                                <a href="{{ url_for('question.delete_question', question_id=question.id) }}" class="btn btn-sm btn-outline-danger"
                                                    onclick="return confirm('Are you sure you want to delete this question?')">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
@@ -414,19 +444,19 @@
                     <nav aria-label="Question database pagination">
                         <ul class="pagination justify-content-center">
                             <li class="page-item {% if current_page == 1 %}disabled{% endif %}">
-                                <a class="page-link" href="{{ url_for('add_question', page=current_page-1, subject_filter=request.args.get('subject_filter', ''), difficulty_filter=request.args.get('difficulty_filter', ''), created_by_filter=request.args.get('created_by_filter', ''), question_type_filter=request.args.get('question_type_filter', '')) }}">
+                                <a class="page-link" href="{{ url_for('question.add_question', page=current_page-1, subject_filter=request.args.get('subject_filter', ''), difficulty_filter=request.args.get('difficulty_filter', ''), created_by_filter=request.args.get('created_by_filter', ''), question_type_filter=request.args.get('question_type_filter', '')) }}">
                                     Previous
                                 </a>
                             </li>
                             {% for i in range(1, total_pages + 1) %}
                                 <li class="page-item {% if i == current_page %}active{% endif %}">
-                                    <a class="page-link" href="{{ url_for('add_question', page=i, subject_filter=request.args.get('subject_filter', ''), difficulty_filter=request.args.get('difficulty_filter', ''), created_by_filter=request.args.get('created_by_filter', ''), question_type_filter=request.args.get('question_type_filter', '')) }}">
+                                    <a class="page-link" href="{{ url_for('question.add_question', page=i, subject_filter=request.args.get('subject_filter', ''), difficulty_filter=request.args.get('difficulty_filter', ''), created_by_filter=request.args.get('created_by_filter', ''), question_type_filter=request.args.get('question_type_filter', '')) }}">
                                         {{ i }}
                                     </a>
                                 </li>
                             {% endfor %}
                             <li class="page-item {% if current_page == total_pages %}disabled{% endif %}">
-                                <a class="page-link" href="{{ url_for('add_question', page=current_page+1, subject_filter=request.args.get('subject_filter', ''), difficulty_filter=request.args.get('difficulty_filter', ''), created_by_filter=request.args.get('created_by_filter', ''), question_type_filter=request.args.get('question_type_filter', '')) }}">
+                                <a class="page-link" href="{{ url_for('question.add_question', page=current_page+1, subject_filter=request.args.get('subject_filter', ''), difficulty_filter=request.args.get('difficulty_filter', ''), created_by_filter=request.args.get('created_by_filter', ''), question_type_filter=request.args.get('question_type_filter', '')) }}">
                                     Next
                                 </a>
                             </li>
@@ -439,27 +469,7 @@
 </div>
 
 <!-- View Question Modal -->
-<div class="modal fade" id="viewQuestionModal" tabindex="-1" aria-labelledby="viewQuestionModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="viewQuestionModalLabel">Question Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body" id="questionModalBody">
-                <!-- Question details will be loaded here dynamically -->
-                <div class="text-center">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
+
 {% endif %}
 
 {% if session.get('user_type') == 'teacher' %}
@@ -528,10 +538,10 @@
                                                         data-question-type="{{ question.question_type }}">
                                                     <i class="fas fa-eye"></i>
                                                 </button>
-                                                <a href="{{ url_for('edit_question', question_id=question.id) }}" class="btn btn-sm btn-outline-secondary">
+                                                <a href="{{ url_for('question.edit_question', question_id=question.id) }}" class="btn btn-sm btn-outline-secondary">
                                                     <i class="fas fa-edit"></i>
                                                 </a>
-                                                <a href="{{ url_for('delete_question', question_id=question.id) }}" class="btn btn-sm btn-outline-danger"
+                                                <a href="{{ url_for('question.delete_question', question_id=question.id) }}" class="btn btn-sm btn-outline-danger"
                                                    onclick="return confirm('Are you sure you want to delete this question?')">
                                                     <i class="fas fa-trash"></i>
                                                 </a>
@@ -553,175 +563,6 @@
 </div>
 {% endif %}
 
-{% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
-<script>
-    $(document).ready(function() {
-        // Show/hide question type containers based on selection
-        function showQuestionTypeContainer() {
-            const selectedType = $('#question_type').val();
-            $('.question-type-container').hide();
-
-            if (selectedType === 'mcq') {
-                $('#mcq-container').show();
-            } else if (selectedType === 'fill_in_blanks') {
-                $('#fill-in-blanks-container').show();
-            } else if (selectedType === 'match_columns') {
-                $('#match-columns-container').show();
-            } else if (selectedType === 'assertion_reason') {
-                $('#assertion-reason-container').show();
-            } else if (selectedType === 'case_based') {
-                $('#case-based-container').show();
-            }
-        }
-
-        // Initialize by showing the default question type container
-        showQuestionTypeContainer();
-
-        // Update when the question type changes
-        $('#question_type').change(showQuestionTypeContainer);
-
-        // Fill in the Blanks - Add/Remove functionality
-        let blankCounter = 2;
-
-        $('#add-blank-btn').click(function() {
-            const newBlank = `
-                <div class="blank-item">
-                    <div class="input-group">
-                        <span class="input-group-text">Blank ${blankCounter}</span>
-                        <input type="text" class="form-control" name="blank${blankCounter}" placeholder="Correct answer">
-                        <button type="button" class="btn btn-outline-danger remove-blank-btn">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-            $('#blanks-list').append(newBlank);
-            blankCounter++;
-        });
-
-        $(document).on('click', '.remove-blank-btn', function() {
-            if ($('.blank-item').length > 1) {
-                $(this).closest('.blank-item').remove();
-            } else {
-                alert('You need at least one blank answer field.');
-            }
-        });
-
-        // Match Columns - Add/Remove functionality
-        let columnCounter = 2;
-
-        $('#add-column-btn').click(function() {
-            const newColumn = `
-                <div class="column-item">
-                    <div class="row">
-                        <div class="col-md-5">
-                            <input type="text" class="form-control" name="column_a_${columnCounter}" placeholder="Column A item">
-                        </div>
-                        <div class="col-md-5">
-                            <input type="text" class="form-control" name="column_b_${columnCounter}" placeholder="Column B item">
-                        </div>
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-outline-danger remove-column-btn">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            `;
-            $('#columns-list').append(newColumn);
-            columnCounter++;
-        });
-
-        $(document).on('click', '.remove-column-btn', function() {
-            if ($('.column-item').length > 1) {
-                $(this).closest('.column-item').remove();
-            } else {
-                alert('You need at least one pair of matching items.');
-            }
-        });
-
-        // Case-based questions - Add/Remove functionality
-        let caseQuestionCounter = 2;
-
-        $('#add-case-question-btn').click(function() {
-            const newCaseQuestion = `
-                <div class="case-question-item">
-                    <div class="mb-3">
-                        <label for="case_question_${caseQuestionCounter}" class="form-label">Question ${caseQuestionCounter}</label>
-                        <input type="text" class="form-control" id="case_question_${caseQuestionCounter}" name="case_question_${caseQuestionCounter}" placeholder="Enter question text">
-                    </div>
-                    <div class="row mb-2">
-                        <div class="col-md-6">
-                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option1" placeholder="Option 1">
-                        </div>
-                        <div class="col-md-6">
-                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option2" placeholder="Option 2">
-                        </div>
-                    </div>
-                    <div class="row mb-2">
-                        <div class="col-md-6">
-                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option3" placeholder="Option 3">
-                        </div>
-                        <div class="col-md-6">
-                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option4" placeholder="Option 4">
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="case_q${caseQuestionCounter}_correct" class="form-label">Correct Answer</label>
-                        <select class="form-select" id="case_q${caseQuestionCounter}_correct" name="case_q${caseQuestionCounter}_correct">
-                            <option value="" selected disabled>Select correct option</option>
-                            <option value="1">Option 1</option>
-                            <option value="2">Option 2</option>
-                            <option value="3">Option 3</option>
-                            <option value="4">Option 4</option>
-                        </select>
-                    </div>
-                    <button type="button" class="btn btn-outline-danger btn-sm remove-case-question-btn">
-                        <i class="fas fa-times"></i> Remove Question
-                    </button>
-                </div>
-            `;
-            $('#case-questions-list').append(newCaseQuestion);
-            caseQuestionCounter++;
-        });
-
-        $(document).on('click', '.remove-case-question-btn', function() {
-            if ($('.case-question-item').length > 1) {
-                $(this).closest('.case-question-item').remove();
-            } else {
-                alert('You need at least one question for the case.');
-            }
-        });
-
-        // Handle view question modal
-        $('.view-question-btn').click(function() {
-            const questionId = $(this).data('question-id');
-
-        // Display loading state
-        $('#questionModalBody').html(`
-            <div class="text-center">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-            </div>
-        `);
-         $('#viewQuestionModalLabel').text('Question Metadata');
-
-        // Make AJAX request to get question metadata
-        $.ajax({
-            url: '/get_question_metadata/' + questionId,
-            type: 'GET',
-            success: function(data) {
-                // Simply insert the HTML response into the modal body
-                $('#questionModalBody').html(data);
-            },
-            error: function(error) {
-                $('#questionModalBody').html('<div class="alert alert-danger">Error loading question metadata.</div>');
-            }
-        });
-        });
-    });
-</script>
-{% endblock %}
+<script src="{{ url_for('static', filename='js/add_question.js') }}"></script>
 {% endblock %}

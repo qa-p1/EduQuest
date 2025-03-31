@@ -1,0 +1,177 @@
+{% extends "menu.html" %}
+
+{% block title %}EduQuest - Generate Exam{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4">Generate Exam</h1>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form id="examForm">
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label for="subject" class="form-label">Subject</label>
+                                <select class="form-select" id="subject" name="subject" required disabled>
+                                    <option value="" disabled selected>Select Class First</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="class_of_ex" class="form-label">Class</label>
+                                <select class="form-select" id="class_of_ex" name="class_of_ex" required>
+                                    <option value="" disabled selected>Select Class</option>
+                                    <option value="6">VI</option>
+                                    <option value="7">VII</option>
+                                    <option value="8">VIII</option>
+                                    <option value="9">IX</option>
+                                    <option value="10">X</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="examType" class="form-label">Exam Type</label>
+                                <select class="form-select" id="examType" name="examType" required>
+                                    <option value="" disabled selected>Select Exam Type</option>
+                                    <option value="mid_term_1">Mid Term 1</option>
+                                    <option value="mid_term_2">Mid Term 2</option>
+                                    <option value="half_yearly">Half Yearly</option>
+                                    <option value="final_exam">Final Exam</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="questionCount" class="form-label">Number of Questions</label>
+                                <input type="number" class="form-control" id="questionCount" name="questionCount" min="1" max="50" required>
+                                <small class="form-text text-muted">Maximum 50 questions allowed</small>
+                            </div>
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col-md-4">
+                                <label for="examTitle" class="form-label">Exam Title</label>
+                                <input type="text" class="form-control" id="examTitle" name="examTitle" required disabled>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="examDate" class="form-label">Exam Date</label>
+                                <input type="date" class="form-control" id="examDate" name="examDate" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="duration" class="form-label">Duration (minutes)</label>
+                                <input type="number" class="form-control" id="duration" name="duration" min="10" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="button" class="btn btn-primary" id="generateQuestionBoxes">
+                                    <i class="fas fa-chevron-right"></i> Generate Question Boxes
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <div id="questionBoxesContainer" class="mt-4 d-none">
+                        <h5 class="mb-3">Select Questions for Exam</h5>
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> You need to select <span id="questionCountDisplay">0</span> questions for this exam
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <button class="btn btn-success" id="saveExam" disabled>
+                                    <i class="fas fa-save"></i> Save Exam
+                                </button>
+                                <button class="btn btn-secondary ms-2" id="resetForm">
+                                    <i class="fas fa-redo"></i> Reset
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="questionBoxes" class="row"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Question Selection Modal -->
+<div class="modal fade" id="questionSelectionModal" tabindex="-1" aria-labelledby="questionSelectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="questionSelectionModalLabel">Select Question</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="questionSearchInput" placeholder="Search questions...">
+                        <button class="btn btn-outline-secondary" type="button" id="searchQuestionsBtn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-3 row">
+                    <div class="col-md-4">
+                        <select class="form-select" id="difficultyFilter">
+                            <option value="">All Difficulties</option>
+                            <option value="easy">Easy</option>
+                            <option value="medium">Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select class="form-select" id="typeFilter">
+                            <option value="">All Types</option>
+                            <option value="mcq">Multiple Choice</option>
+                            <option value="fill_in_blanks">Fill in the Blanks</option>
+                            <option value="match_columns">Match Columns</option>
+                            <option value="assertion_reason">Assertion Reason</option>
+                            <option value="case_based">Case Based</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" class="form-control" id="createdByFilter" placeholder="Created by...">
+                    </div>
+                </div>
+
+                <div id="questionsList" class="list-group">
+                    <!-- Questions will be populated here -->
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Loading questions...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Question Preview Modal -->
+<div class="modal fade" id="questionPreviewModal" tabindex="-1" aria-labelledby="questionPreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="questionPreviewModalLabel">Question Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="questionPreviewContent">
+                <!-- Question preview will be shown here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/generate_exam.js') }}"></script>
+{% endblock %}

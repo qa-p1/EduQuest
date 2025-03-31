@@ -16,7 +16,7 @@
                 <h5 class="mb-0">Edit Question</h5>
             </div>
             <div class="card-body">
-                <form action="{{ url_for('edit_question', question_id=question_id) }}" method="POST">
+                <form action="{{ url_for('question.edit_question', question_id=question_id) }}" method="POST">
                     <div class="mb-3">
                         <label for="subject" class="form-label">Subject</label>
                         <select class="form-select" id="subject" name="subject" required>
@@ -211,7 +211,7 @@
                     {% endif %}
 
                     <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('add_question') }}" class="btn btn-secondary">Cancel</a>
+                        <a href="{{ url_for('question.add_question') }}" class="btn btn-secondary">Cancel</a>
                         <button type="submit" class="btn btn-primary">Update Question</button>
                     </div>
                 </form>
