@@ -3,3 +3,4 @@
 serviceAccountKey.json
 .vercel
 .idea
+*.pyc

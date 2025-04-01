@@ -1,5 +1,56 @@
     $(document).ready(function() {
         // Show/hide question type containers based on selection
+        $('#question_type').change(function() {
+        const selectedType = $(this).val();
+        $('.question-type-container').hide();
+        $(`#${selectedType}-container`).show();
+    });
+
+    // Trigger change to show the default question type (mcq)
+    $('#question_type').trigger('change');
+
+    // Handle class selection to load subjects dynamically
+    $('#class').change(function() {
+        const classId = $(this).val();
+        const subjectSelect = $('#subject');
+
+        if (!classId) {
+            subjectSelect.html('<option value="" selected disabled>Select Class First</option>');
+            subjectSelect.prop('disabled', true);
+            return;
+        }
+
+        // Show loading state
+        subjectSelect.html('<option value="" selected disabled>Loading subjects...</option>');
+
+        // Fetch subjects for the selected class
+        $.ajax({
+            url: '/teacher/api/subjects_by_class',
+            method: 'GET',
+            data: { class: classId },
+            dataType: 'json',
+            success: function(response) {
+                let options = '<option value="" selected disabled>Select a subject</option>';
+
+                if (response.subjects && response.subjects.length > 0) {
+                    response.subjects.forEach(function(subject) {
+                        options += `<option value="${subject.id}">${subject.name}</option>`;
+                    });
+                    subjectSelect.prop('disabled', false);
+                } else {
+                    options = '<option value="" selected disabled>No subjects available for this class</option>';
+                    subjectSelect.prop('disabled', true);
+                }
+
+                subjectSelect.html(options);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching subjects:', error);
+                subjectSelect.html('<option value="" selected disabled>Error loading subjects</option>');
+                subjectSelect.prop('disabled', true);
+            }
+        });
+    });
         function showQuestionTypeContainer() {
             const selectedType = $('#question_type').val();
             $('.question-type-container').hide();

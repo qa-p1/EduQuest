@@ -5,7 +5,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from app.utils.auth import login_required
 from app.models.question import (
     get_teacher_questions, get_admin_questions, get_question_by_id,
-    add_question as model_add_question, update_question, delete_question,
+    add_question as model_add_question, update_question, delete_question as delete_in_db,
 )
 from app.models.subject import teacher_teaches_subject
 from datetime import datetime
@@ -16,7 +16,6 @@ question_bp = Blueprint('question', __name__)
 @question_bp.route('/add_question', methods=['GET', 'POST'])
 @login_required(user_types=['admin', 'teacher'])
 def add_question():
-    print(session)
     user_type = session.get('user_type')
     user_id = session.get('user_id')
 
@@ -249,7 +248,6 @@ def add_question():
                 flash("Error adding question. Please try again.", 'danger')
         except Exception as e:
             flash(f"Error adding question: {e}", 'danger')
-    t2 = time.perf_counter()
     return render_template('add_question.html', subjects=subjects, teacher_questions=teacher_questions,
                            admin_questions=admin_questions, current_page=current_page,
                            total_pages=total_pages)
@@ -322,7 +320,7 @@ def edit_question(question_id):
             return redirect(url_for('question.add_question'))
 
         # Check if user is authorized to edit this question
-        if user_type == 'teacher' and question_data.get('created_by') != user_id:
+        if user_type == 'teacher' and str(question_data.get('created_by')) != str(user_id):
             flash("You are not authorized to edit this question.", 'danger')
             return redirect(url_for('question.add_question'))
 
@@ -340,7 +338,7 @@ def edit_question(question_id):
             if user_type == 'teacher' and subject_id != question_data.get('subject_id') and not teacher_teaches_subject(
                     user_id, subject_id):
                 flash("You are not authorized to move this question to the selected subject.", 'warning')
-                return render_template('edit_question.html', question=question_data, subjects=subjects)
+                return render_template('edit_question.html', question=question_data, subjects=subjects, question_id=question_id)
 
             # Base updated data
             updated_data = {
@@ -360,7 +358,7 @@ def edit_question(question_id):
 
                 if not all([question_text, option1, option2, option3, option4, correct_answer]):
                     flash("All fields for MCQ are required.", 'warning')
-                    return render_template('edit_question.html', question=question_data, subjects=subjects)
+                    return render_template('edit_question.html', question=question_data, subjects=subjects, question_id=question_id)
 
                 updated_data.update({
                     "text": question_text,
@@ -369,7 +367,7 @@ def edit_question(question_id):
                         "2": option2,
                         "3": option3,
                         "4": option4
-                    },
+                    } if isinstance(question_data.get('options'), dict) else [option1, option2, option3, option4],
                     "correct_answer": correct_answer
                 })
 
@@ -388,7 +386,7 @@ def edit_question(question_id):
 
                 if not question_text or not blanks:
                     flash("Question text and at least one blank are required.", 'warning')
-                    return render_template('edit_question.html', question=question_data, subjects=subjects)
+                    return render_template('edit_question.html', question=question_data, subjects=subjects, question_id=question_id)
 
                 updated_data.update({
                     "text": question_text,
@@ -397,9 +395,9 @@ def edit_question(question_id):
 
             elif question_type == 'match_columns':
                 # Get column items from form
-                column_a = {}
-                column_b = {}
-                matches = {}
+                column_a = []
+                column_b = []
+                matches = []
 
                 i = 1
                 while True:
@@ -409,14 +407,14 @@ def edit_question(question_id):
                     if item_a is None or item_b is None:
                         break
 
-                    column_a[str(i)] = item_a
-                    column_b[str(i)] = item_b
-                    matches[str(i)] = str(i)  # Default matching
+                    column_a.append(item_a)
+                    column_b.append(item_b)
+                    matches.append(str(i))  # Default matching
                     i += 1
 
                 if not column_a or not column_b:
                     flash("At least one pair of matching items is required.", 'warning')
-                    return render_template('edit_question.html', question=question_data, subjects=subjects)
+                    return render_template('edit_question.html', question=question_data, subjects=subjects, question_id=question_id)
 
                 updated_data.update({
                     "text": "Match the following items:",
@@ -432,7 +430,7 @@ def edit_question(question_id):
 
                 if not assertion or not reason or not ar_correct_option:
                     flash("Assertion, reason, and correct option are required.", 'warning')
-                    return render_template('edit_question.html', question=question_data, subjects=subjects)
+                    return render_template('edit_question.html', question=question_data, subjects=subjects, question_id=question_id)
 
                 updated_data.update({
                     "assertion": assertion,
@@ -445,7 +443,7 @@ def edit_question(question_id):
 
                 if not case_content:
                     flash("Case content is required.", 'warning')
-                    return render_template('edit_question.html', question=question_data, subjects=subjects)
+                    return render_template('edit_question.html', question=question_data, subjects=subjects, question_id=question_id)
 
                 # Process sub-questions for the case
                 case_questions = []
@@ -457,25 +455,35 @@ def edit_question(question_id):
 
                     # Get options for this sub-question
                     options = {}
+                    options_list = []
                     for j in range(1, 5):
                         option = request.form.get(f'case_q{i}_option{j}')
                         if option:
                             options[str(j)] = option
+                            options_list.append(option)
 
                     correct_answer = request.form.get(f'case_q{i}_correct')
 
-                    if sub_question and options and correct_answer:
-                        case_questions.append({
-                            'text': sub_question,
-                            'options': options,
-                            'correct_answer': correct_answer
-                        })
+                    if sub_question and (options or options_list) and correct_answer:
+                        # Check how the structure should be (dict or list)
+                        if isinstance(question_data.get('case_questions', [{}])[0].get('options'), dict):
+                            case_questions.append({
+                                'text': sub_question,
+                                'options': options,
+                                'correct_answer': correct_answer
+                            })
+                        else:
+                            case_questions.append({
+                                'text': sub_question,
+                                'options': options_list,
+                                'correct_answer': correct_answer
+                            })
 
                     i += 1
 
                 if not case_questions:
                     flash("At least one case-based question is required.", 'warning')
-                    return render_template('edit_question.html', question=question_data, subjects=subjects)
+                    return render_template('edit_question.html', question=question_data, subjects=subjects, question_id=question_id)
 
                 updated_data.update({
                     "case_content": case_content,
@@ -494,7 +502,7 @@ def edit_question(question_id):
         flash(f"Error: {e}", 'danger')
         return redirect(url_for('question.add_question'))
 
-    return render_template('edit_question.html', question=question_data, subjects=subjects)
+    return render_template('edit_question.html', question=question_data, subjects=subjects, question_id=question_id)
 
 
 @question_bp.route('/delete_question/<question_id>')
@@ -517,7 +525,7 @@ def delete_question(question_id):
             return redirect(url_for('question.add_question'))
 
         # Delete the question
-        success = delete_question(question_id)
+        success = delete_in_db(question_id)
         if success:
             flash("Question deleted successfully!", 'primary')
         else:
