@@ -1,8 +1,9 @@
+import time
 from datetime import datetime
 from flask import Blueprint, render_template, session, request, flash, jsonify
 from app.utils.auth import login_required
 from app.utils.database import database
-
+from firebase_admin import db
 teacher_bp = Blueprint('teacher', __name__, url_prefix='/teacher')
 
 
@@ -10,6 +11,7 @@ teacher_bp = Blueprint('teacher', __name__, url_prefix='/teacher')
 @login_required(user_types=['teacher'])
 def dashboard():
     return render_template('teacher/dashboard.html')
+
 
 
 @teacher_bp.route('/generate_exam', methods=['GET', 'POST'])
@@ -24,28 +26,30 @@ def generate_exam():
         user_name = session.get('name', 'Unknown Teacher')
 
         try:
-            # Create exam record
             exams_ref = database.child('exams')
             new_exam_ref = exams_ref.push()
 
             exam_data = {
                 'title': data.get('title'),
                 'subject_id': data.get('subject_id'),
-                'class': data.get('class'),  # Added class field
+                'class': int(data.get('class')),
                 'exam_type': data.get('exam_type'),
                 'exam_date': data.get('exam_date'),
                 'duration': data.get('duration'),
                 'created_by': user_id,
                 'created_by_name': user_name,
+                'total_marks': data.get('total_marks', 0),
                 'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'questions': {}
+                'questions': {},
+                'exam_status': False
             }
 
             # Add questions to the exam
             for index, question in data.get('questions', {}).items():
                 exam_data['questions'][index] = {
                     'question_id': question.get('question_id'),
-                    'order': question.get('order')
+                    'order': question.get('order'),
+                    'marks': question.get('marks', 0)
                 }
 
             new_exam_ref.set(exam_data)
@@ -78,20 +82,27 @@ def get_subjects_by_class():
         classes_teached = teacher_data.get('classes_teached', {})
         subjects_for_class = []
 
+        # Check if the class exists in classes_teached
         if class_id in classes_teached:
-            subject = classes_teached[class_id].get('subject')
-            if subject:
-                # Get the subject ID from the subjects collection
-                subjects_ref = database.child('subjects')
-                all_subjects = subjects_ref.get()
+            # Get all sections for this class
+            sections = classes_teached[class_id].get('sections', {})
 
-                if all_subjects:
-                    for subj_id, subj_data in all_subjects.items():
-                        if subj_data.get('name', '').lower() == subject.lower():
-                            subjects_for_class.append({
-                                'id': subj_id,
-                                'name': subj_data.get('name')
-                            })
+            # Collect all subject IDs across all sections
+            subject_ids = []
+            for section, section_subjects in sections.items():
+                subject_ids.extend(section_subjects)
+
+            # Remove duplicates
+            subject_ids = list(set(subject_ids))
+
+            # Get subject details for each subject ID
+            for subject_id in subject_ids:
+                subject_data = database.child('subjects').child(subject_id).get()
+                if subject_data:
+                    subjects_for_class.append({
+                        'id': subject_id,
+                        'name': subject_data.get('name', 'Unknown Subject')
+                    })
 
         return {'subjects': subjects_for_class}, 200
     except Exception as e:
@@ -113,7 +124,6 @@ def get_questions():
 
         if all_questions:
             for q_id, q_data in all_questions.items():
-                print(type(q_data.get('class')), type(class_id))
                 if q_data.get('subject_id') == subject_id and q_data.get('class') == class_id:
                     questions_list.append({
                         'id': q_id,
@@ -123,6 +133,7 @@ def get_questions():
                         'difficulty': q_data.get('difficulty', 'medium'),
                         'created_by_name': q_data.get('created_by_name', 'Unknown Teacher'),
                         'created_at': q_data.get('created_at', datetime.now().strftime('%Y-%m-%d')),
+                        'marks': q_data.get('marks', 1),
                         'options': q_data.get('options', {}),
                         'column_a': q_data.get('column_a', {}),
                         'column_b': q_data.get('column_b', {}),
@@ -134,12 +145,6 @@ def get_questions():
         return {'questions': questions_list}
     except Exception as e:
         return {'error': str(e)}, 500
-
-
-@teacher_bp.route('/submissions')
-@login_required(user_types=['teacher'])
-def submissions():
-    return render_template('teacher/submissions.html')
 
 
 @teacher_bp.route('/manage_students')
@@ -189,13 +194,13 @@ def get_exams_and_students():
 
         # 3. Get students data for classes taught by this teacher
         student_data = {}
-        class_sections = set()
+        class_section_pairs = []
 
         # Collect all class-section combinations taught by this teacher
-        for class_id, sections_data in classes_teached.items():
-            for section_key, section_value in sections_data.items():
-                if section_key.isdigit():  # Skip 'subject' key
-                    class_sections.add((class_id, section_value))
+        for class_id, class_data in classes_teached.items():
+            sections = class_data.get('sections', {})
+            for section, subject_ids in sections.items():
+                class_section_pairs.append((class_id, section))
 
         # Get all students
         students_ref = database.child('students')
@@ -203,7 +208,11 @@ def get_exams_and_students():
 
         if all_students:
             for email, student in all_students.items():
-                if (str(student.get('class')), student.get('section')) in class_sections:
+                student_class = str(student.get('class'))
+                student_section = student.get('section')
+
+                # Check if this student belongs to one of the teacher's classes
+                if (student_class, student_section) in class_section_pairs:
                     # Include only relevant students
                     student_data[email] = student
 
@@ -249,6 +258,7 @@ def update_student_status():
         print(traceback.format_exc())  # Add detailed error logging
         return {'error': str(e)}, 500
 
+
 # Similarly in update_bulk_status route
 @teacher_bp.route('/api/update_bulk_status', methods=['POST'])
 @login_required(user_types=['teacher'])
@@ -280,4 +290,142 @@ def update_bulk_status():
     except Exception as e:
         import traceback
         print(traceback.format_exc())  # Add detailed error logging
+        return {'error': str(e)}, 500
+
+
+@teacher_bp.route('/api/add_submission_reason', methods=['POST'])
+@login_required(user_types=['teacher'])
+def add_submission_reason():
+    try:
+        data = request.json
+        student_email = data.get('student_email')
+        exam_id = data.get('exam_id')
+        reason = data.get('reason')
+
+        if not student_email or not exam_id or not reason:
+            return {'error': 'Missing required fields'}, 400
+
+        # Replace dots with commas for Firebase compatible key
+        safe_email = student_email.replace('.', ',')
+
+        # Create or update the submission record with reason
+        exam_ref = database.child('exams').child(exam_id)
+        current_exam = exam_ref.get()
+
+        if not current_exam:
+            return {'error': 'Exam not found'}, 404
+
+        # Update or create the submissions object
+        submissions = current_exam.get('submissions', {})
+        submissions[safe_email] = {
+            'reason': reason,
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        }
+
+        # Update the exam with the new submissions data
+        exam_ref.update({'submissions': submissions})
+
+        return jsonify({
+            'success': True,
+            'message': f"Submission reason added for student"
+        })
+
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return {'error': str(e)}, 500
+
+
+@teacher_bp.route('/api/delete_submission', methods=['POST'])
+@login_required(user_types=['teacher'])
+def delete_submission():
+    try:
+        data = request.json
+        student_email = data.get('student_email')
+        exam_id = data.get('exam_id')
+
+        if not student_email or not exam_id:
+            return {'error': 'Missing required fields'}, 400
+
+        # Replace dots with commas for Firebase compatible key
+        safe_email = student_email.replace('.', ',')
+
+        # Get the exam data
+        exam_ref = database.child('exams').child(exam_id)
+        current_exam = exam_ref.get()
+
+        if not current_exam:
+            return {'error': 'Exam not found'}, 404
+
+        # Get submissions and remove the specific student
+        submissions = current_exam.get('submissions', {})
+
+        if safe_email in submissions:
+            del submissions[safe_email]
+
+            # Update the exam with the modified submissions data
+            exam_ref.update({'submissions': submissions})
+
+            return jsonify({
+                'success': True,
+                'message': f"Submission deleted successfully"
+            })
+        else:
+            return jsonify({
+                'success': False,
+                'message': f"No submission found for this student"
+            })
+
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return {'error': str(e)}, 500
+
+
+@teacher_bp.route('/api/toggle_exam_status', methods=['POST'])
+@login_required(user_types=['teacher'])
+def toggle_exam_status():
+    try:
+        data = request.json
+        exam_id = data.get('exam_id')
+        new_status = data.get('status')
+
+        if exam_id is None or new_status is None:
+            return {'error': 'Missing required fields'}, 400
+
+        # Update the exam status
+        exam_ref = database.child('exams').child(exam_id)
+        current_exam = exam_ref.get()
+
+        if not current_exam:
+            return {'error': 'Exam not found'}, 404
+
+        # Make sure only the teacher who created the exam can toggle its status
+        if current_exam.get('created_by') != session.get('user_id'):
+            return {'error': 'Unauthorized to modify this exam'}, 403
+
+        # Update only the exam_status field
+        exam_ref.update({'exam_status': new_status})
+
+        return jsonify({
+            'success': True,
+            'message': f"Exam status updated to {'enabled' if new_status else 'disabled'}"
+        })
+
+    except Exception as e:
+        import traceback
+        print(traceback.format_exc())
+        return {'error': str(e)}, 500
+
+@teacher_bp.route('/api/total_questions_by_teacher', methods=['GET'])
+@login_required(user_types=['teacher'])
+def questions_by_teacher():
+    try:
+        teacher_email = session.get('user_id')
+        print(teacher_email)
+        if not teacher_email:
+            return {'error': 'User not authenticated'}, 401
+        questions_total = database.child('administrators').child('teachers').child(teacher_email).child('questions_created').get()
+        return jsonify({'questions_created': questions_total})
+    except Exception as e:
         return {'error': str(e)}, 500

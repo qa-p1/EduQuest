@@ -9,6 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveExamBtn = document.getElementById('saveExam');
     const resetFormBtn = document.getElementById('resetForm');
     const classSelect = document.getElementById("class_of_ex");
+    const totalMarksInput = document.getElementById('total_marks');
+    let totalSelectedMarks = 0;
     subjectSelect.disabled = true;
 
     // Load subjects when class changes
@@ -22,6 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
             subjectSelect.disabled = true;
         }
     });
+
     function fetchSubjectsByClass(classId) {
         subjectSelect.disabled = true;
         subjectSelect.innerHTML = '<option value="" disabled selected>Loading subjects...</option>';
@@ -56,6 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
+    // Update exam title when selections change
     classSelect.addEventListener('change', updateExamTitle);
     subjectSelect.addEventListener('change', updateExamTitle);
     examTypeSelect.addEventListener('change', updateExamTitle);
@@ -68,18 +72,35 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Generate question boxes when the button is clicked
     generateBtn.addEventListener('click', function(e) {
+        // Clear any previous validation messages
+        const validationMsg = document.getElementById('validation-message');
+        if (validationMsg) validationMsg.remove();
+
         const questionCount = parseInt(questionCountInput.value);
         const subject = subjectSelect.value;
         const examType = examTypeSelect.value;
+        const totalMarks = parseInt(totalMarksInput.value);
         selectedClassId = classSelect.value;
-        if (!subject || !questionCount || !examType || !selectedClassId || questionCount <= 0 || questionCount > 50) {
-            flashMessage('Please enter valid information. Number of questions must be between 1 and 50.', 'warning');
+
+        // Validate all required fields
+        if (!subject || !questionCount || !examType || !selectedClassId || !totalMarks) {
+            flashMessage('Please fill in all required fields: Class, Subject, Exam Type, Number of Questions, and Total Marks.', 'warning');
             return;
         }
 
-        // Clear previous question boxes
-        questionBoxes.innerHTML = '';
-        selectedQuestions = {};
+        // Validate numeric inputs
+        if (questionCount <= 0 || questionCount > 50) {
+            flashMessage('Number of questions must be between 1 and 50.', 'warning');
+            return;
+        }
+
+        if (totalMarks <= 0) {
+            flashMessage('Total marks must be greater than 0.', 'warning');
+            return;
+        }
+
+        // First reset to clear existing data
+        resetQuestionBoxes();
 
         // Update the question count display
         questionCountDisplay.textContent = questionCount;
@@ -94,7 +115,28 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Reset save button state
         updateSaveButtonState();
+
+        // Add a validation message about total marks
+        const alertDiv = document.createElement('div');
+        alertDiv.id = 'validation-message';
+        alertDiv.className = 'alert alert-info mt-3';
+        alertDiv.innerHTML = `<i class="fas fa-info-circle"></i> Please select questions totaling exactly ${totalMarks} marks.`;
+        questionBoxesContainer.insertBefore(alertDiv, questionBoxesContainer.firstChild);
     });
+
+    // Reset just the question boxes without resetting the whole form
+    function resetQuestionBoxes() {
+        // Clear previous question boxes
+        questionBoxes.innerHTML = '';
+        selectedQuestions = {};
+        totalSelectedMarks = 0;
+
+        // Reset the marks warning if it exists
+        const marksWarning = document.getElementById('marksWarning');
+        if (marksWarning) {
+            marksWarning.style.display = 'none';
+        }
+    }
 
     // Create a question box
     function createQuestionBox(index) {
@@ -108,6 +150,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h6 class="mb-0">Question ${index}</h6>
                 <div>
+                    <span class="badge bg-primary question-marks">0 marks</span>
                     <span class="badge bg-secondary question-type">-</span>
                     <span class="badge bg-secondary question-difficulty">-</span>
                 </div>
@@ -152,6 +195,12 @@ document.addEventListener('DOMContentLoaded', function() {
     function openQuestionSelectionModal() {
         const subject = subjectSelect.value;
         const classId = selectedClassId; // Use the stored class ID
+
+        // Check if subject and class are selected
+        if (!subject || !classId) {
+            flashMessage('Please select both Class and Subject before selecting questions.', 'warning');
+            return;
+        }
 
         // Clear previous questions
         const questionsList = document.getElementById('questionsList');
@@ -268,20 +317,29 @@ document.addEventListener('DOMContentLoaded', function() {
             };
 
             listItem.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-1">${question.text}</h6>
-                    <div>
-                        <span class="badge ${difficultyClasses[question.difficulty] || 'bg-secondary'}">${question.difficulty.toUpperCase()}</span>
-                        <span class="badge bg-info">${questionTypeNames[question.question_type] || question.question_type}</span>
-                    </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-1">${question.text}</h6>
+                <div>
+                    <span class="badge bg-primary">${question.marks || 0} marks</span>
+                    <span class="badge ${difficultyClasses[question.difficulty] || 'bg-secondary'}">${question.difficulty.toUpperCase()}</span>
+                    <span class="badge bg-info">${questionTypeNames[question.question_type] || question.question_type}</span>
                 </div>
-                <small class="text-muted">Created by: ${question.created_by_name}</small>
-            `;
+            </div>
+            <small class="text-muted">Created by: ${question.created_by_name}</small>`;
 
             listItem.dataset.questionId = question.id;
 
             if (!isSelected) {
                 listItem.addEventListener('click', function() {
+                    // Check if adding this question would exceed total marks
+                    const totalMarks = parseInt(totalMarksInput.value) || 0;
+                    const potentialTotal = totalSelectedMarks + (question.marks || 0);
+
+                    if (potentialTotal > totalMarks) {
+                        flashMessage(`Adding this question would exceed the total marks (${totalMarks}). Current total: ${totalSelectedMarks}, This question: ${question.marks || 0}`, 'warning');
+                        return;
+                    }
+
                     selectQuestion(question);
                     const modal = bootstrap.Modal.getInstance(document.getElementById('questionSelectionModal'));
                     modal.hide();
@@ -315,6 +373,8 @@ document.addEventListener('DOMContentLoaded', function() {
             questionItems.forEach(item => {
                 const questionId = item.dataset.questionId;
                 const question = allQuestions[questionId];
+
+                if (!question) return; // Skip if question not found
 
                 let show = true;
 
@@ -356,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div>
                             <p><strong>Can't find your question?</strong></p>
-                            <a href="/add_question" class="btn btn-primary btn-sm">
+                            <a href="/teacher/add_question" class="btn btn-primary btn-sm">
                                 <i class="fas fa-plus-circle"></i> Add a New Question
                             </a>
                         </div>
@@ -388,8 +448,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const boxDiv = document.getElementById(`questionBox_${currentBoxIndex}`);
         if (!boxDiv) return;
 
+        // Remove marks from previously selected question if any
+        if (selectedQuestions[currentBoxIndex]) {
+            totalSelectedMarks -= selectedQuestions[currentBoxIndex].marks || 0;
+        }
+
         // Store the selected question
         selectedQuestions[currentBoxIndex] = question;
+        totalSelectedMarks += question.marks || 0;
 
         // Update the box UI
         const questionTypeNames = {
@@ -406,6 +472,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'hard': 'bg-danger'
         };
 
+        boxDiv.querySelector('.question-marks').textContent = `${question.marks || 0} marks`;
         boxDiv.querySelector('.question-type').textContent = questionTypeNames[question.question_type] || question.question_type;
         boxDiv.querySelector('.question-type').className = `badge bg-info question-type`;
 
@@ -415,6 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
         boxDiv.querySelector('.question-preview').textContent = question.text;
         boxDiv.querySelector('.question-preview').classList.remove('text-muted');
 
+        boxDiv.querySelector('.select-question').textContent = 'Change Question';
         boxDiv.querySelector('.remove-question').classList.remove('d-none');
         boxDiv.querySelector('.preview-question').classList.remove('d-none');
 
@@ -429,10 +497,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const boxDiv = document.getElementById(`questionBox_${index}`);
         if (!boxDiv) return;
 
+        // Update total marks
+        if (selectedQuestions[index]) {
+            totalSelectedMarks -= selectedQuestions[index].marks || 0;
+        }
+
         // Remove the selected question
         delete selectedQuestions[index];
 
         // Reset the box UI
+        boxDiv.querySelector('.question-marks').textContent = '0 marks';
         boxDiv.querySelector('.question-type').textContent = '-';
         boxDiv.querySelector('.question-type').className = 'badge bg-secondary question-type';
 
@@ -442,6 +516,8 @@ document.addEventListener('DOMContentLoaded', function() {
         boxDiv.querySelector('.question-preview').textContent = 'No question selected';
         boxDiv.querySelector('.question-preview').classList.add('text-muted');
 
+        boxDiv.querySelector('.select-question').textContent = 'Select Question';
+        boxDiv.querySelector('.select-question').innerHTML = '<i class="fas fa-plus-circle"></i> Select Question';
         boxDiv.querySelector('.remove-question').classList.add('d-none');
         boxDiv.querySelector('.preview-question').classList.add('d-none');
 
@@ -573,10 +649,44 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateSaveButtonState() {
         const questionCount = parseInt(questionCountInput.value) || 0;
         const selectedCount = Object.keys(selectedQuestions).length;
+        const totalExamMarks = parseInt(totalMarksInput.value) || 0;
 
-        saveExamBtn.disabled = selectedCount !== questionCount;
+        const marksMatch = totalSelectedMarks === totalExamMarks;
+        const questionCountMatch = selectedCount === questionCount;
 
-        if (selectedCount > 0 && selectedCount === questionCount) {
+        // Create marks warning if it doesn't exist
+        let marksWarning = document.getElementById('marksWarning');
+        if (!marksWarning) {
+            marksWarning = document.createElement('div');
+            marksWarning.id = 'marksWarning';
+            marksWarning.className = 'alert alert-warning mt-3';
+
+            // Find the container to append to
+            const alertInfo = document.querySelector('.alert-info');
+            if (alertInfo) {
+                alertInfo.after(marksWarning);
+            } else {
+                questionBoxesContainer.prepend(marksWarning);
+            }
+        }
+
+        if (selectedCount > 0) {
+            marksWarning.innerHTML = `
+                <i class="fas fa-info-circle"></i> Selected questions total: <strong>${totalSelectedMarks}/${totalExamMarks}</strong> marks
+                ${!marksMatch && selectedCount === questionCount ? 
+                    '<br><span class="text-danger">Total marks do not match the expected exam total!</span>' : ''}
+                ${totalSelectedMarks > totalExamMarks ? 
+                    '<br><span class="text-danger">Selected questions exceed the total marks limit!</span>' : ''}
+            `;
+            marksWarning.style.display = 'block';
+        } else {
+            marksWarning.style.display = 'none';
+        }
+
+        // Enable save button only if both question count and marks match
+        saveExamBtn.disabled = !(questionCountMatch && marksMatch);
+
+        if (questionCountMatch && marksMatch) {
             saveExamBtn.classList.remove('btn-secondary');
             saveExamBtn.classList.add('btn-success');
         } else {
@@ -585,6 +695,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Update exam title based on selected values
     function updateExamTitle() {
         const classSelect = document.getElementById('class_of_ex');
         const subjectSelect = document.getElementById('subject');
@@ -610,6 +721,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Save exam functionality
     saveExamBtn.addEventListener('click', function() {
         const subject = subjectSelect.value;
         const examType = examTypeSelect.value;
@@ -617,9 +729,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const examTitle = document.getElementById('examTitle').value;
         const examDate = document.getElementById('examDate').value;
         const duration = document.getElementById('duration').value;
+        const totalExamMarks = parseInt(totalMarksInput.value) || 0;
 
-        if (!subject || !examType || !examClass || !examTitle || !examDate || !duration) {
+        if (!subject || !examType || !examClass || !examTitle || !examDate || !duration || !totalExamMarks) {
             flashMessage('Please fill in all exam details.', 'warning');
+            return;
+        }
+
+        // Validate duration is a positive number
+        if (parseInt(duration) <= 0) {
+            flashMessage('Duration must be a positive number.', 'warning');
+            return;
+        }
+
+        // Validate exam date is not in the past
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selectedDate = new Date(examDate);
+        if (selectedDate < today) {
+            flashMessage('Exam date cannot be in the past.', 'warning');
             return;
         }
 
@@ -631,6 +759,11 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        if (totalSelectedMarks !== totalExamMarks) {
+            flashMessage(`The total marks (${totalSelectedMarks}) do not match the expected exam total (${totalExamMarks}).`, 'warning');
+            return;
+        }
+
         // Prepare exam data
         const examData = {
             title: examTitle,
@@ -639,14 +772,17 @@ document.addEventListener('DOMContentLoaded', function() {
             exam_type: examType,
             exam_date: examDate,
             duration: parseInt(duration),
+            total_marks: totalExamMarks,
             questions: {}
         };
 
         // Add question data
+        // In your saveExamBtn event listener, change this code:
         for (const [index, question] of Object.entries(selectedQuestions)) {
-            examData.questions[index] = {
+            examData.questions[parseInt(index) - 1] = {  // Subtract 1 to start from 0
                 question_id: question.id,
-                order: parseInt(index)
+                order: parseInt(index),  // Keep this as is to preserve the original ordering
+                marks: question.marks || 0
             };
         }
 
@@ -683,7 +819,13 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedQuestions = {};
         allQuestions = {};
         selectedClassId = '';
+        totalSelectedMarks = 0;
 
+            // Remove marks warning if it exists
+        const marksWarning = document.getElementById('marksWarning');
+        if (marksWarning) {
+            marksWarning.style.display = 'none';
+        }
         // Reset and disable subject dropdown
         subjectSelect.innerHTML = '<option value="" disabled selected>Select Class First</option>';
         subjectSelect.disabled = true;

@@ -3,97 +3,181 @@
 {% block title %}EduQuest - Profile{% endblock %}
 
 {% block content %}
-<div class="row mt-4">
-    <div class="col-12">
-        <h1 class="display-5 mb-4">My Profile</h1>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <div class="card-body text-center">
-                <div class="mb-3">
-                    <i class="fas fa-user-circle fa-7x text-primary"></i>
-                </div>
-                <h4>{{ user_data.name }}</h4>
-                <p class="text-muted">{{ session.get('email') }}</p>
-                <span class="badge {% if session.get('user_type') == 'admin' %}bg-danger{% elif session.get('user_type') == 'teacher' %}bg-primary{% else %}bg-success{% endif %} mb-2">
-                    {{ session.get('user_type', '').title() }}
-                </span>
-                {% if session.get('user_type') == 'student' %}
-                    <span class="badge {% if user_data.active %}bg-success{% else %}bg-warning{% endif %} mb-2 ms-1">
-                        {{ 'Active' if user_data.active else 'Inactive' }}
-                    </span>
-                {% endif %}
-            </div>
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 mb-0">My Profile</h1>
+            <p class="text-muted">Manage your account information</p>
         </div>
     </div>
 
-    <div class="col-md-8 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Profile Information</h5>
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="mb-4">
+                        <div class="bg-primary bg-opacity-10 mx-auto rounded-circle p-3 d-inline-block">
+                            <i class="fas fa-user-circle fa-5x text-primary"></i>
+                        </div>
+                    </div>
+                    <h4 class="mb-1">{{ user_data.name }}</h4>
+                    <p class="text-muted mb-3">{{ session.get('email') }}</p>
+                    <span class="badge {% if session.get('user_type') == 'admin' %}bg-danger{% elif session.get('user_type') == 'teacher' %}bg-primary{% else %}bg-success{% endif %} mb-2 px-3 py-2">
+                        {{ session.get('user_type', '').title() }}
+                    </span>
+                    {% if session.get('user_type') == 'student' %}
+                        <span class="badge {% if user_data.status == 'active' %}bg-success{% else %}bg-warning{% endif %} mb-2 ms-1 px-3 py-2">
+                            {{ user_data.status.title() }}
+                        </span>
+                    {% elif session.get('user_type') == 'teacher' %}
+                        <span class="badge {% if user_data.status == 'active' %}bg-success{% else %}bg-warning{% endif %} mb-2 ms-1 px-3 py-2">
+                            {{ user_data.status.title() }}
+                        </span>
+                    {% endif %}
+
+                    {% if session.get('user_type') == 'teacher' %}
+                    <div class="mt-4">
+                        <h6 class="text-start mb-3">Subjects</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            {% for subject in user_data.subjects %}
+                            <span class="badge bg-info text-dark">{{ subject.title() }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="card-body">
-                <form>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    {% if session.get('user_type') == 'teacher' %}
+                    <form method="POST" action="{{ url_for('common.profile') }}">
+                        <div class="mb-3">
+                            <label for="name" class="form-label">Full Name</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="name" name="name" value="{{ user_data.name }}">
+                                <button type="submit" name="update_name" class="btn btn-primary">Update</button>
+                            </div>
+                        </div>
+                    </form>
+                    {% else %}
                     <div class="mb-3">
                         <label for="name" class="form-label">Full Name</label>
                         <input type="text" class="form-control" id="name" value="{{ user_data.name }}" readonly>
                     </div>
+                    {% endif %}
+
                     <div class="mb-3">
                         <label for="email" class="form-label">Email Address</label>
                         <input type="email" class="form-control" id="email" value="{{ session.get('email') }}" readonly>
                     </div>
+
                     <div class="mb-3">
                         <label for="user-type" class="form-label">User Type</label>
                         <input type="text" class="form-control" id="user-type" value="{{ session.get('user_type', '').title() }}" readonly>
                     </div>
-                    {% if user_data.get('school') %}
-                    <div class="mb-3">
-                        <label for="school" class="form-label">School/Institution</label>
-                        <input type="text" class="form-control" id="school" value="{{ user_data.school }}" readonly>
-                    </div>
-                    {% endif %}
-                    {% if user_data.get('joined_date') %}
-                    <div class="mb-3">
-                        <label for="joined-date" class="form-label">Joined Date</label>
-                        <input type="text" class="form-control" id="joined-date" value="{{ user_data.joined_date }}" readonly>
-                    </div>
-                    {% endif %}
-                    <button type="button" class="btn btn-primary" disabled>Edit Profile</button>
-                    <small class="text-muted ms-2">Edit functionality will be available soon</small>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="row">
-    <div class="col-md-12 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Account Security</h5>
+                    {% if session.get('user_type') == 'teacher' %}
+                    <div class="mb-3">
+                        <label for="teacher-id" class="form-label">Teacher ID</label>
+                        <input type="text" class="form-control" id="teacher-id" value="{{ user_data.tchid }}" readonly>
+                    </div>
+
+                    {% if user_data.get('mobileno') %}
+                    <div class="mb-3">
+                        <label for="mobile" class="form-label">Mobile Number</label>
+                        <input type="text" class="form-control" id="mobile" value="{{ user_data.mobileno }}" readonly>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Classes Teaching</label>
+                        <div class="card bg-light">
+                            <div class="card-body py-2">
+                                {% for class_num, class_data in user_data.classes_teached.items() %}
+                                    <div class="mb-2">
+                                        <strong>Class {{ class_num }}:</strong>
+                                        {% for section, _ in class_data.sections.items() %}
+                                            <span class="badge bg-secondary me-1">Section {{ section.upper() }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if user_data.get('questions_created') %}
+                    <div class="mb-3">
+                        <label for="questions" class="form-label">Questions Created</label>
+                        <input type="text" class="form-control" id="questions" value="{{ user_data.questions_created }}" readonly>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    {% if session.get('user_type') == 'student' %}
+                    <div class="mb-3">
+                        <label for="class" class="form-label">Class</label>
+                        <input type="text" class="form-control" id="class" value="{{ user_data.class }}" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="section" class="form-label">Section</label>
+                        <input type="text" class="form-control" id="section" value="{{ user_data.section|upper }}" readonly>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="roll" class="form-label">Roll Number</label>
+                        <input type="text" class="form-control" id="roll" value="{{ user_data.rollno }}" readonly>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="card-body">
-                <form>
-                    <div class="mb-3">
-                        <label for="current-password" class="form-label">Current Password</label>
-                        <input type="password" class="form-control" id="current-password">
-                    </div>
-                    <div class="mb-3">
-                        <label for="new-password" class="form-label">New Password</label>
-                        <input type="password" class="form-control" id="new-password">
-                    </div>
-                    <div class="mb-3">
-                        <label for="confirm-password" class="form-label">Confirm New Password</label>
-                        <input type="password" class="form-control" id="confirm-password">
-                    </div>
-                    <button type="button" class="btn btn-primary" disabled>Change Password</button>
-                    <small class="text-muted ms-2">Password change functionality will be available soon</small>
-                </form>
+
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0">Account Security</h5>
+                </div>
+                <div class="card-body">
+                    {% if session.get('user_type') == 'teacher' %}
+                    <form method="POST" action="{{ url_for('common.profile') }}">
+                        <div class="mb-3">
+                            <label for="current-password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="current-password" name="current_password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="new-password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new-password" name="new_password">
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm-password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm-password" name="confirm_password">
+                        </div>
+                        <button type="submit" name="change_password" class="btn btn-primary">Change Password</button>
+                    </form>
+                    {% else %}
+                    <form>
+                        <div class="mb-3">
+                            <label for="current-password" class="form-label">Current Password</label>
+                            <input type="password" class="form-control" id="current-password" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="new-password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new-password" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label for="confirm-password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm-password" disabled>
+                        </div>
+                        <button type="button" class="btn btn-primary" disabled>Change Password</button>
+                        <small class="text-muted ms-2">Password change functionality will be available soon</small>
+                    </form>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
-</div>
 {% endblock %}
