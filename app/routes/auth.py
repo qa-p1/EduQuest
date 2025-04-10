@@ -30,9 +30,6 @@ def login():
                 session['user_type'] = user_data['user_type']
                 session['name'] = user_data['name']
 
-                if user_type == 'student':
-                    session['active'] = user_data.get('active', False)
-
                 session['menu_items'] = get_menu_items(user_type)
                 if user_data['user_type'] == 'teacher':
                     session['subjects'] = get_all_subjects(user_data['user_id'])
@@ -45,7 +42,7 @@ def login():
 
         except Exception as e:
             flash(f"Authentication error: {str(e)}", 'danger')
-            print(f"Login error: {str(e)}")
+            flash(f"Login error: {str(e)}")
 
     return render_template('login.html', user_type=user_type)
 

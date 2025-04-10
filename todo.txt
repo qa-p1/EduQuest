@@ -1,6 +1,4 @@
-delete submissions page from everywhere and implement the same functionality in manage students by renaming it to manage students and submission
-add columns of submission according to the logic inside manage student submission page and give option to enable and disable exam and also fix the inactive and active coordination between different levels
-of div
+
 make the quiz page for students where they will show exam if the exam is enabled by the teacher and is of their class and they can take that exam if the teacher marks them as active in the database
 inside quiz page enable proper quiz taking functionality with not be able to exit the exam until completed or reset it with submission linked to it when the student submit the exam it will go into that exam's
 submission's page where the submission will be stored by their id and hence marked respectively and everything else be managed

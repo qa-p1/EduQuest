@@ -1,33 +1,37 @@
 :root {
-      --primary-color: #4361ee;
-      --primary-light: #eaefff;
-      --secondary-color: #60676e;
-      --danger-color: #ef476f;
-      --success-color: #06d6a0;
-      --warning-color: #ffd166;
-      --info-color: #4cc9f0;
-      --light-color: #f8f9fa;
-      --dark-color: #212529;
-      --text-muted: #64748b;
-      --border-color: #e9ecef;
-      --font-main: 'Quicksand', 'Segoe UI', sans-serif;
-      --font-heading: 'Poppins', sans-serif;
+  --primary-color: #6c8bff;
+  --primary-light: #1f2b50;
+  --secondary-color: #9ca3af;
+  --danger-color: #ff6b8e;
+  --success-color: #06d6a0;
+  --warning-color: #ffd166;
+  --info-color: #4cc9f0;
+  --light-color: #374151;
+  --dark-color: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border-color: #2d3748;
+  --font-main: 'Quicksand', 'Segoe UI', sans-serif;
+  --font-heading: 'Poppins', sans-serif;
+  --bg-color: #121826;
+  --card-bg: #1e293b;
+  --hover-bg: #2c3a50;
 }
 
 body {
   font-family: var(--font-main);
-  background-color: #f5f7fb;
+  background-color: var(--bg-color);
   color: var(--dark-color);
 }
 
 .sidebar {
-  background-color: white;
-  box-shadow: 0 0 15px rgba(0,0,0,0.05);
+  background-color: var(--card-bg);
+  box-shadow: 0 0 15px rgba(0,0,0,0.2);
 }
 
 .navbar-brand {
   font-family: var(--font-heading);
   font-weight: 700;
+  color: var(--dark-color);
 }
 
 .nav-link {
@@ -42,13 +46,20 @@ body {
 .card {
   border: none;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background-color: var(--card-bg);
 }
 
 .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+}
+
+.card-header {
+  background-color: var(--card-bg) !important;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--dark-color);
 }
 
 .stat-card {
@@ -56,21 +67,34 @@ body {
   position: relative;
 }
 
+.stat-card.bg-white {
+  background-color: var(--card-bg) !important;
+}
+
 .stat-card .icon-bg {
   position: absolute;
   right: -15px;
   bottom: -15px;
   font-size: 6rem;
-  opacity: 0.1;
+  opacity: 0.05;
 }
 
 .table-exams {
   white-space: nowrap;
+  color: var(--dark-color);
 }
 
 .table-exams th {
   font-weight: 600;
   color: var(--secondary-color);
+}
+
+.table-exams td {
+  border-color: var(--border-color);
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--hover-bg);
 }
 
 .badge-status {
@@ -83,6 +107,11 @@ body {
 .progress {
   height: 8px;
   border-radius: 4px;
+  background-color: var(--light-color);
+}
+
+.text-muted {
+  color: var(--text-muted) !important;
 }
 
 .quick-actions .btn {
@@ -91,10 +120,13 @@ body {
   margin-bottom: 0.5rem;
   border-radius: 8px;
   transition: all 0.2s;
+  background-color: var(--light-color);
+  color: var(--dark-color);
 }
 
 .quick-actions .btn:hover {
   transform: translateX(5px);
+  background-color: var(--hover-bg);
 }
 
 .activity-feed .activity-item {
@@ -103,6 +135,7 @@ body {
   margin-bottom: 0.5rem;
   border-radius: 0 8px 8px 0;
   transition: all 0.2s;
+  background-color: var(--card-bg);
 }
 
 .activity-feed .activity-item:hover {
@@ -112,13 +145,14 @@ body {
 
 .student-list .student-item {
   padding: 0.75rem 1rem;
-  border-radius: 8px;
+  border-radius: 20px;
   margin-bottom: 0.5rem;
   transition: all 0.2s;
+  background-color: var(--card-bg);
 }
 
 .student-list .student-item:hover {
-  background-color: var(--light-color);
+  background-color: var(--hover-bg);
 }
 
 .avatar {
@@ -139,4 +173,137 @@ body {
   border-radius: 50%;
   display: inline-block;
   margin-right: 5px;
+}
+
+/* Additional CSS styles for pending submissions accordion */
+.status-indicator {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--primary-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.student-item {
+  border-radius: 20;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem;
+  background-color: var(--card-bg);
+}
+
+.accordion-button:not(.collapsed) {
+  background-color: var(--hover-bg);
+  box-shadow: none;
+  color: var(--dark-color);
+}
+
+.accordion-button {
+  background-color: var(--card-bg);
+  color: var(--dark-color);
+}
+
+.accordion-button:focus {
+  box-shadow: none;
+  border-color: var(--border-color);
+}
+
+/* Make the accordion items look better */
+#pendingSubmissionsAccordion .accordion-item {
+  background-color: transparent;
+  border-color: var(--border-color);
+}
+
+/* Remove redundant padding */
+#pendingSubmissionsAccordion .accordion-body {
+  padding: 0;
+}
+
+/* Add a light hover effect to student items */
+.student-item:hover {
+  background-color: var(--hover-bg);
+}
+
+/* Add a total counter styling */
+#totalPendingCount {
+  background-color: var(--secondary-color);
+}
+
+.last-row .card {
+  height: 450px !important; /* Set a fixed height for all cards in the bottom row */
+}
+
+/* Dark mode table styling */
+.table {
+  color: var(--dark-color);
+}
+
+/* Button styling */
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+  background-color: #5070dc;
+  border-color: #5070dc;
+}
+
+.btn-light {
+  background-color: var(--light-color);
+  border-color: var(--light-color);
+  color: var(--dark-color);
+}
+
+.btn-light:hover {
+  background-color: #445167;
+  border-color: #445167;
+  color: var(--dark-color);
+}
+
+/* Adjust the colored backgrounds for the stat cards */
+.bg-primary.bg-opacity-10 {
+  background-color: var(--primary-light) !important;
+}
+
+.bg-success.bg-opacity-10 {
+  background-color: rgba(6, 214, 160, 0.1) !important;
+}
+
+.bg-warning.bg-opacity-10 {
+  background-color: rgba(255, 209, 102, 0.1) !important;
+}
+
+.bg-info.bg-opacity-10 {
+  background-color: rgba(76, 201, 240, 0.1) !important;
+}
+
+/* Dark scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--card-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--light-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-color);
 }

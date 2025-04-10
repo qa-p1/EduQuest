@@ -17,8 +17,11 @@
       <main class="col-md-12 ms-sm-auto px-md-4 py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
           <h1 class="h3">Teacher Dashboard</h1>
-          <div>
-              <h2 class="text-muted me-2">Welcome back, <strong>{{ session.get('name', 'Teacher') }}</strong></h2>
+          <div class="d-flex align-items-center">
+              <h2 class="text-muted me-3">Welcome back, <strong>{{ session.get('name', 'Teacher') }}</strong></h2>
+              <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
+                <i class="fas fa-sign-out-alt me-1"></i>Logout
+              </a>
           </div>
         </div>
 
@@ -31,7 +34,6 @@
                   <div>
                     <h6 class="text-muted mb-1">Total Students</h6>
                     <h2 class="fw-bold" id="totalStudents">0</h2>
-                    <p class="mb-0"><span class="text-success"><i class="fas fa-arrow-up me-1"></i>5%</span> since last month</p>
                   </div>
                   <div class="bg-primary bg-opacity-10 p-3 rounded">
                     <i class="fas fa-users text-primary fa-2x"></i>
@@ -49,7 +51,6 @@
                   <div>
                     <h6 class="text-muted mb-1">Active Exams</h6>
                     <h2 class="fw-bold" id="activeExams">0</h2>
-                    <p class="mb-0"><span class="text-success"><i class="fas fa-arrow-up me-1"></i>12%</span> since last month</p>
                   </div>
                   <div class="bg-success bg-opacity-10 p-3 rounded">
                     <i class="fas fa-file-alt text-success fa-2x"></i>
@@ -67,8 +68,7 @@
                   <div>
                     <h6 class="text-muted mb-1">Question Bank</h6>
                     <h2 class="fw-bold" id="totalQuestions">0</h2>
-                    <p class="mb-0"><span class="text-success"><i class="fas fa-arrow-up me-1"></i>8%</span> since last month</p>
-                  </div>
+                    </div>
                   <div class="bg-warning bg-opacity-10 p-3 rounded">
                     <i class="fas fa-question-circle text-warning fa-2x"></i>
                   </div>
@@ -85,8 +85,7 @@
                   <div>
                     <h6 class="text-muted mb-1">Avg. Completion</h6>
                     <h2 class="fw-bold" id="avgCompletion">0%</h2>
-                    <p class="mb-0"><span class="text-danger"><i class="fas fa-arrow-down me-1"></i>3%</span> since last month</p>
-                  </div>
+                    </div>
                   <div class="bg-info bg-opacity-10 p-3 rounded">
                     <i class="fas fa-chart-pie text-info fa-2x"></i>
                   </div>
@@ -97,9 +96,7 @@
           </div>
         </div>
 
-        <!-- Main Content Rows -->
         <div class="row">
-          <!-- Left Column - Active Exams -->
           <div class="col-xl-8 mb-4">
             <div class="card h-100">
               <div class="card-header bg-white d-flex justify-content-between align-items-center">
@@ -110,7 +107,7 @@
               </div>
               <div class="card-body p-0">
                 <div class="table-responsive">
-                  <table class="table table-hover table-exams mb-0">
+                  <table class="table table-hover table-exams mb-0 table-dark">
                     <thead>
                       <tr>
                         <th>Exam Title</th>
@@ -123,75 +120,10 @@
                       </tr>
                     </thead>
                     <tbody id="activeExamsTable">
-                      <tr>
-                        <td>Mid-Term Assessment</td>
-                        <td>Mathematics</td>
-                        <td>10-A</td>
-                        <td>12 Apr 2025</td>
-                        <td><span class="badge bg-success badge-status">Active</span></td>
-                        <td>
-                          <div class="d-flex align-items-center">
-                            <div class="progress flex-grow-1 me-2">
-                              <div class="progress-bar bg-success" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <span>75%</span>
-                          </div>
-                        </td>
-                        <td>
-                          <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></button>
-                            <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>Science Quiz</td>
-                        <td>Science</td>
-                        <td>9-B</td>
-                        <td>15 Apr 2025</td>
-                        <td><span class="badge bg-warning text-dark badge-status">Scheduled</span></td>
-                        <td>
-                          <div class="d-flex align-items-center">
-                            <div class="progress flex-grow-1 me-2">
-                              <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <span>0%</span>
-                          </div>
-                        </td>
-                        <td>
-                          <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></button>
-                            <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></button>
-                          </div>
-                        </td>
-                      </tr>
-                      <tr>
-                        <td>English Essay</td>
-                        <td>English</td>
-                        <td>11-C</td>
-                        <td>10 Apr 2025</td>
-                        <td><span class="badge bg-success badge-status">Active</span></td>
-                        <td>
-                          <div class="d-flex align-items-center">
-                            <div class="progress flex-grow-1 me-2">
-                              <div class="progress-bar bg-success" role="progressbar" style="width: 48%" aria-valuenow="48" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <span>48%</span>
-                          </div>
-                        </td>
-                        <td>
-                          <div class="btn-group">
-                            <button class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i></button>
-                            <button class="btn btn-sm btn-outline-secondary"><i class="fas fa-edit"></i></button>
-                          </div>
-                        </td>
-                      </tr>
+
                     </tbody>
                   </table>
                 </div>
-              </div>
-              <div class="card-footer bg-white text-center">
-                <a href="#" class="text-decoration-none">View All Exams</a>
               </div>
             </div>
           </div>
@@ -247,9 +179,7 @@
           </div>
         </div>
 
-        <!-- Bottom Row -->
-        <div class="row">
-          <!-- Recent Activity -->
+        <div class="row last-row">
           <div class="col-lg-5 mb-4">
             <div class="card h-100">
               <div class="card-header bg-white">
@@ -257,262 +187,41 @@
               </div>
               <div class="card-body p-0">
                 <div class="activity-feed p-3" id="activityFeed">
-                  <div class="activity-item bg-light">
-                    <div class="d-flex align-items-center mb-2">
-                      <strong>Mathematics Quiz</strong>
-                      <span class="badge bg-success ms-auto">Completed</span>
-                    </div>
-                    <p class="text-muted mb-1">25 students completed the quiz</p>
-                    <small class="text-muted">Today, 10:15 AM</small>
-                  </div>
 
-                  <div class="activity-item bg-light">
-                    <div class="d-flex align-items-center mb-2">
-                      <strong>New Student Added</strong>
-                      <span class="badge bg-primary ms-auto">New</span>
-                    </div>
-                    <p class="text-muted mb-1">James Wilson was added to Class 9-B</p>
-                    <small class="text-muted">Yesterday, 2:30 PM</small>
-                  </div>
-
-                  <div class="activity-item bg-light">
-                    <div class="d-flex align-items-center mb-2">
-                      <strong>English Essay</strong>
-                      <span class="badge bg-warning text-dark ms-auto">In Progress</span>
-                    </div>
-                    <p class="text-muted mb-1">15 submissions received so far</p>
-                    <small class="text-muted">Yesterday, 11:45 AM</small>
-                  </div>
                 </div>
-              </div>
-              <div class="card-footer bg-white text-center">
-                <a href="#" class="text-decoration-none">View All Activity</a>
               </div>
             </div>
           </div>
 
-          <!-- Class Performance -->
           <div class="col-lg-3 mb-4">
             <div class="card h-100">
               <div class="card-header bg-white">
                 <h5 class="mb-0">Class Performance</h5>
               </div>
-              <div class="card-body">
-                <div class="mb-4">
-                  <div class="d-flex justify-content-between mb-1">
-                    <span>Class 10-A</span>
-                    <span>78%</span>
-                  </div>
-                  <div class="progress">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: 78%" aria-valuenow="78" aria-valuemin="0" aria-valuemax="100"></div>
-                  </div>
-                </div>
+              <div class="card-body class-perfo">
 
-                <div class="mb-4">
-                  <div class="d-flex justify-content-between mb-1">
-                    <span>Class 9-B</span>
-                    <span>65%</span>
-                  </div>
-                  <div class="progress">
-                    <div class="progress-bar bg-primary" role="progressbar" style="width: 65%" aria-valuenow="65" aria-valuemin="0" aria-valuemax="100"></div>
-                  </div>
-                </div>
-
-                <div class="mb-4">
-                  <div class="d-flex justify-content-between mb-1">
-                    <span>Class 11-C</span>
-                    <span>81%</span>
-                  </div>
-                  <div class="progress">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: 81%" aria-valuenow="81" aria-valuemin="0" aria-valuemax="100"></div>
-                  </div>
-                </div>
-
-                <div>
-                  <div class="d-flex justify-content-between mb-1">
-                    <span>Class 8-A</span>
-                    <span>59%</span>
-                  </div>
-                  <div class="progress">
-                    <div class="progress-bar bg-warning" role="progressbar" style="width: 59%" aria-valuenow="59" aria-valuemin="0" aria-valuemax="100"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="card-footer bg-white text-center">
-                <a href="#" class="text-decoration-none">View Detailed Report</a>
               </div>
             </div>
           </div>
 
-          <!-- Outstanding Submissions -->
           <div class="col-lg-4 mb-4">
-            <div class="card h-100">
-              <div class="card-header bg-white">
-                <h5 class="mb-0">Pending Submissions</h5>
-              </div>
-              <div class="card-body p-0">
-                <div class="student-list p-3" id="pendingSubmissions">
-                  <div class="student-item bg-light d-flex align-items-center">
-                    <div class="avatar me-3">AM</div>
-                    <div class="flex-grow-1">
-                      <h6 class="mb-0">Alex Morgan</h6>
-                      <small class="text-muted">Math Quiz - Due 2 days ago</small>
-                    </div>
-                    <div>
-                      <span class="status-indicator bg-danger"></span>
-                      <small class="text-danger">Overdue</small>
-                    </div>
-                  </div>
-
-                  <div class="student-item bg-light d-flex align-items-center">
-                    <div class="avatar me-3">KL</div>
-                    <div class="flex-grow-1">
-                      <h6 class="mb-0">Kevin Lee</h6>
-                      <small class="text-muted">English Essay - Due tomorrow</small>
-                    </div>
-                    <div>
-                      <span class="status-indicator bg-warning"></span>
-                      <small class="text-warning">Due soon</small>
-                    </div>
-                  </div>
-
-                  <div class="student-item bg-light d-flex align-items-center">
-                    <div class="avatar me-3">SJ</div>
-                    <div class="flex-grow-1">
-                      <h6 class="mb-0">Sarah Johnson</h6>
-                      <small class="text-muted">Science Project - Due 3 days</small>
-                    </div>
-                    <div>
-                      <span class="status-indicator bg-success"></span>
-                      <small class="text-success">On track</small>
-                    </div>
-                  </div>
-
-                  <div class="student-item bg-light d-flex align-items-center">
-                    <div class="avatar me-3">DP</div>
-                    <div class="flex-grow-1">
-                      <h6 class="mb-0">Daniel Park</h6>
-                      <small class="text-muted">History Test - Due 1 day ago</small>
-                    </div>
-                    <div>
-                      <span class="status-indicator bg-danger"></span>
-                      <small class="text-danger">Overdue</small>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div class="card-footer bg-white text-center">
-                <a href="#" class="text-decoration-none">View All Pending</a>
+          <div class="card h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Pending Submissions</h5>
+              <span class="badge rounded-pill bg-secondary" id="totalPendingCount"></span>
+            </div>
+            <div class="card-body p-0">
+              <div class="student-list p-2" id="pendingSubmissions" style="max-height: 400px; overflow-y: auto;">
               </div>
             </div>
           </div>
+        </div>
         </div>
       </main>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script>
-    // JavaScript to fetch and update dashboard data
-    document.addEventListener('DOMContentLoaded', function() {
-      // Example function to fetch dashboard data
-      async function fetchDashboardData() {
-        try {
-          const response = await fetch('/teacher/api/exams_and_students');
-          const data = await response.json();
-          const questions_c = await fetch('/teacher/api/total_questions_by_teacher')
-          const questions_created = await questions_c.json()
-          // Update stats
-          if (data.students) {
-            document.getElementById('totalStudents').textContent = Object.keys(data.students).length;
-          }
-
-          if (data.exams) {
-            const activeExams = data.exams.filter(exam => exam.exam_status === true);
-            document.getElementById('activeExams').textContent = activeExams.length;
-
-            // Update exam table if we have exams
-            if (activeExams.length > 0) {
-              updateExamsTable(activeExams, data.students);
-            }
-          }
-          if (questions_created){
-              document.getElementById('totalQuestions').textContent = questions_created.questions_created;
-          }
-          // Set some example stats for now
-
-          document.getElementById('avgCompletion').textContent = '68%';
-
-        } catch (error) {
-          console.error('Error fetching dashboard data:', error);
-        }
-      }
-
-      // Function to update exams table
-      function updateExamsTable(exams, students) {
-        const tableBody = document.getElementById('activeExamsTable');
-
-        // Clear existing rows
-        tableBody.innerHTML = '';
-
-        // Add exams to table
-        exams.slice(0, 5).forEach(exam => {
-          // Calculate completion percentage
-          let completionPercentage = 0;
-          const totalStudents = Object.keys(students).length;
-          const submissions = exam.submissions ? Object.keys(exam.submissions).length : 0;
-
-          if (totalStudents > 0) {
-            completionPercentage = Math.round((submissions / totalStudents) * 100);
-          }
-
-          // Create table row
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${exam.title}</td>
-            <td>${exam.subject_name || 'Unknown'}</td>
-            <td>${exam.class}</td>
-            <td>${exam.exam_date}</td>
-            <td><span class="badge ${exam.exam_status ? 'bg-success' : 'bg-secondary'} badge-status">${exam.exam_status ? 'Active' : 'Inactive'}</span></td>
-            <td>
-              <div class="d-flex align-items-center">
-                <div class="progress flex-grow-1 me-2">
-                  <div class="progress-bar ${completionPercentage > 70 ? 'bg-success' : completionPercentage > 40 ? 'bg-primary' : 'bg-warning'}"
-                       role="progressbar"
-                       style="width: ${completionPercentage}%"
-                       aria-valuenow="${completionPercentage}"
-                       aria-valuemin="0"
-                       aria-valuemax="100"></div>
-                </div>
-                <span>${completionPercentage}%</span>
-              </div>
-            </td>
-            <td>
-              <div class="btn-group">
-                <button class="btn btn-sm btn-outline-primary" onclick="viewExam('${exam.id}')"><i class="fas fa-eye"></i></button>
-                <button class="btn btn-sm btn-outline-secondary" onclick="editExam('${exam.id}')"><i class="fas fa-edit"></i></button>
-              </div>
-            </td>
-          `;
-
-          tableBody.appendChild(row);
-        });
-      }
-
-      // Fetch data on page load
-      fetchDashboardData();
-
-      // Add these functions to window to be accessible from HTML
-      window.viewExam = function(examId) {
-        console.log('View exam:', examId);
-        // Implement view functionality
-      };
-
-      window.editExam = function(examId) {
-        console.log('Edit exam:', examId);
-        // Implement edit functionality
-      };
-    });
-  </script>
+  <script src="{{ url_for('static', filename='js/teacher_dashboard.js') }}"></script>
 </body>
 </html>

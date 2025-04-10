@@ -1,0 +1,376 @@
+{% extends "menu.html" %}
+
+{% block title %}EduQuest - Take Exam{% endblock %}
+
+{% block head %}
+{{ super() }}
+<style>
+    #timer {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .timer-warning {
+        color: #dc3545;
+        animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.5; }
+        100% { opacity: 1; }
+    }
+
+    .question-card {
+        margin-bottom: 2rem;
+        border-left: 4px solid #007bff;
+    }
+
+    .question-number {
+        background-color: #007bff;
+        color: white;
+        padding: 0.3rem 0.7rem;
+        border-radius: 50%;
+        margin-right: 0.5rem;
+    }
+
+    /* Match Columns styling */
+    .match-item {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        background-color: #f8f9fa;
+    }
+
+    /* Fill in the blanks styling */
+    .blank-input {
+        width: 120px;
+        display: inline-block;
+        border-bottom: 1px solid #007bff;
+        margin: 0 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mt-3">
+    <div class="col-md-8">
+        <h2 class="mb-3">{{ exam.title }}</h2>
+    </div>
+    <div class="col-md-4 text-md-end">
+        <div id="timer" class="bg-light p-2 rounded d-inline-block">
+            Time Remaining: <span id="time-remaining">{{ duration }}:00</span>
+        </div>
+    </div>
+</div>
+
+<div class="alert alert-info mb-4">
+    <div class="d-flex">
+        <div class="me-3">
+            <i class="fas fa-info-circle fa-2x"></i>
+        </div>
+        <div>
+            <h5 class="alert-heading">Exam Information</h5>
+            <p class="mb-0">Duration: {{ duration }} minutes</p>
+            <p class="mb-0">Total Questions: {{ questions|length }}</p>
+            <p class="mb-0">Subject: {{ exam.subject_id }}</p>
+        </div>
+    </div>
+</div>
+
+<form id="exam-form" method="POST" action="{{ url_for('student.submit_exam', exam_id=exam.id) }}">
+    {% for question in questions %}
+    <div class="card question-card mb-4" id="question-{{ loop.index }}">
+        <div class="card-header">
+            <span class="question-number">{{ loop.index }}</span>
+            <span class="badge bg-secondary float-end">{{ question.marks }} marks</span>
+        </div>
+        <div class="card-body">
+            <!-- Question text -->
+            {% if question.question_type == "fill_in_blanks" %}
+                <!-- Fill in the blanks -->
+                <p class="card-text" id="fitb-text-{{ question.id }}">{{ question.text }}</p>
+                <div class="mt-3">
+                    {% for blank in question.blanks %}
+                    <div class="mb-2">
+                        <label class="form-label">Blank {{ loop.index }}:</label>
+                        <input type="text" class="form-control" name="answer_{{ question.id }}_{{ loop.index0 }}" required>
+                    </div>
+                    {% endfor %}
+                    <input type="hidden" name="answer_{{ question.id }}" id="answer-{{ question.id }}" value="">
+                </div>
+
+            {% elif question.question_type == "mcq" %}
+                <!-- Multiple choice -->
+                <p class="card-text">{{ question.text }}</p>
+                <div class="mt-3">
+                    {% if question.options is mapping %}
+                        {% for key, option in question.options.items() %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="answer_{{ question.id }}"
+                                   id="option-{{ question.id }}-{{ key }}" value="{{ key }}" required>
+                            <label class="form-check-label" for="option-{{ question.id }}-{{ key }}">
+                                {{ option }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        {% for option in question.options %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="answer_{{ question.id }}"
+                                   id="option-{{ question.id }}-{{ loop.index0 }}" value="{{ loop.index0 }}" required>
+                            <label class="form-check-label" for="option-{{ question.id }}-{{ loop.index0 }}">
+                                {{ option }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+
+            {% elif question.question_type == "match_columns" %}
+                <!-- Match columns -->
+                <p class="card-text">{{ question.text }}</p>
+                <div class="row mt-3">
+                    <div class="col-md-5">
+                        <h6>Column A</h6>
+                        {% if question.column_a is mapping %}
+                            {% for key, item in question.column_a.items() %}
+                            <div class="match-item" data-item-id="{{ key }}">{{ item }}</div>
+                            {% endfor %}
+                        {% else %}
+                            {% for item in question.column_a %}
+                            <div class="match-item" data-item-id="{{ loop.index0 }}">{{ item }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </div>
+                    <div class="col-md-2 text-center d-flex align-items-center justify-content-center">
+                        <div>
+                            <i class="fas fa-arrow-right fa-2x"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-5">
+                        <h6>Column B</h6>
+                        {% if question.column_b is mapping %}
+                            {% for key, item in question.column_b.items() %}
+                            <div class="form-floating mb-3">
+                                <select class="form-select" name="match_{{ question.id }}_{{ key }}" required>
+                                    <option value="" selected disabled>Select match</option>
+                                    {% for k, val in question.column_a.items() %}
+                                    <option value="{{ k }}">{{ val }}</option>
+                                    {% endfor %}
+                                </select>
+                                <label>Match for: {{ item }}</label>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            {% for item in question.column_b %}
+                            <div class="form-floating mb-3">
+                                <select class="form-select" name="match_{{ question.id }}_{{ loop.index0 }}" required>
+                                    <option value="" selected disabled>Select match</option>
+                                    {% for col_a_item in question.column_a %}
+                                    <option value="{{ loop.index0 }}">{{ col_a_item }}</option>
+                                    {% endfor %}
+                                </select>
+                                <label>Match for: {{ item }}</label>
+                            </div>
+                            {% endfor %}
+                        {% endif %}
+                        <input type="hidden" name="answer_{{ question.id }}" id="matches-{{ question.id }}" value="">
+                    </div>
+                </div>
+
+            {% elif question.question_type == "assertion_reason" %}
+                <!-- Assertion Reason -->
+                <div class="mb-3">
+                    <p><strong>Assertion:</strong> {{ question.assertion }}</p>
+                    <p><strong>Reason:</strong> {{ question.reason }}</p>
+                </div>
+                <div class="mt-3">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="answer_{{ question.id }}" id="ar-{{ question.id }}-a" value="a" required>
+                        <label class="form-check-label" for="ar-{{ question.id }}-a">
+                            A. Both Assertion and Reason are true and Reason is the correct explanation of Assertion
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="answer_{{ question.id }}" id="ar-{{ question.id }}-b" value="b">
+                        <label class="form-check-label" for="ar-{{ question.id }}-b">
+                            B. Both Assertion and Reason are true but Reason is not the correct explanation of Assertion
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="answer_{{ question.id }}" id="ar-{{ question.id }}-c" value="c">
+                        <label class="form-check-label" for="ar-{{ question.id }}-c">
+                            C. Assertion is true but Reason is false
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="answer_{{ question.id }}" id="ar-{{ question.id }}-d" value="d">
+                        <label class="form-check-label" for="ar-{{ question.id }}-d">
+                            D. Assertion is false but Reason is true
+                        </label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="answer_{{ question.id }}" id="ar-{{ question.id }}-e" value="e">
+                        <label class="form-check-label" for="ar-{{ question.id }}-e">
+                            E. Both Assertion and Reason are false
+                        </label>
+                    </div>
+                </div>
+
+            {% elif question.question_type == "case_based" %}
+                <!-- Case Based -->
+                <div class="mb-4 p-3 bg-light rounded">
+                    <h6 class="mb-3">Case Study:</h6>
+                    <p>{{ question.case_content }}</p>
+                </div>
+
+                {% for case_q in question.case_questions %}
+                <div class="mb-4 border-bottom pb-3">
+                    <p class="mb-2"><strong>Question {{ loop.index }}:</strong> {{ case_q.text }}</p>
+
+                    {% if case_q.options is mapping %}
+                        {% for key, option in case_q.options.items() %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="answer_{{ question.id }}_{{ loop.parent.loop.index0 }}"
+                                  id="case-{{ question.id }}-{{ loop.parent.loop.index0 }}-{{ key }}" value="{{ key }}" required>
+                            <label class="form-check-label" for="case-{{ question.id }}-{{ loop.parent.loop.index0 }}-{{ key }}">
+                                {{ option }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        {% for option in case_q.options %}
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="answer_{{ question.id }}_{{ loop.parent.loop.index0 }}"
+                                  id="case-{{ question.id }}-{{ loop.parent.loop.index0 }}-{{ loop.index0 }}" value="{{ loop.index0 }}" required>
+                            <label class="form-check-label" for="case-{{ question.id }}-{{ loop.parent.loop.index0 }}-{{ loop.index0 }}">
+                                {{ option }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+                {% endfor %}
+                <input type="hidden" name="answer_{{ question.id }}" id="case-answers-{{ question.id }}" value="">
+
+            {% else %}
+                <!-- Default - text display only -->
+                <p class="card-text">{{ question.text }}</p>
+                <div class="mt-3">
+                    <textarea class="form-control" name="answer_{{ question.id }}" rows="4" placeholder="Enter your answer here" required></textarea>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+
+    <div class="d-flex justify-content-between mb-5">
+        <button type="button" class="btn btn-outline-secondary" id="prev-question" disabled>
+            <i class="fas fa-arrow-left me-2"></i>Previous
+        </button>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-primary" id="next-question">
+                Next<i class="fas fa-arrow-right ms-2"></i>
+            </button>
+            <button type="submit" class="btn btn-success" id="submit-exam">
+                <i class="fas fa-check-circle me-2"></i>Submit Exam
+            </button>
+        </div>
+    </div>
+</form>
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="submitConfirmModal" tabindex="-1" aria-labelledby="submitConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title" id="submitConfirmModalLabel">Confirm Submission</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to submit your exam? This action cannot be undone.</p>
+                <p id="unanswered-warning" class="text-danger d-none">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Warning: You have unanswered questions.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirm-submit">Yes, Submit Exam</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Timeout Modal -->
+<div class="modal fade" id="timeoutModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Time's Up!</h5>
+            </div>
+            <div class="modal-body">
+                <p>Your exam time has expired. Your answers will be submitted automatically.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="timeout-submit">Submit Now</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Submitting your exam...</h5>
+                <p class="mb-0">Please wait and do not close this page.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Add these elements right before the closing body tag or at the end of the content block -->
+
+<!-- Exam Start Countdown Modal -->
+<div class="modal fade" id="examStartCountdownModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Exam Starting Soon</h5>
+            </div>
+            <div class="modal-body text-center p-4">
+                <div class="display-1 fw-bold mb-3" id="start-countdown">10</div>
+                <p>Your exam will start in <span id="countdown-seconds">10</span> seconds.</p>
+                <p>The exam will be in fullscreen mode. Please don't attempt to exit fullscreen or switch applications.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Warning Modal -->
+<div class="modal fade" id="warningModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title">Warning</h5>
+            </div>
+            <div class="modal-body">
+                <p id="warning-message">You attempted to exit the exam environment. Please return to the exam immediately.</p>
+                <p><strong>Exit Attempts: <span id="exit-attempt-count">1</span>/3</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-danger" id="exit-exam-btn">Exit Exam & Submit</button>
+                <button type="button" class="btn btn-primary" id="continue-exam-btn">Continue Exam</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='js/take_exam.js') }}"></script>
+{% endblock %}
+

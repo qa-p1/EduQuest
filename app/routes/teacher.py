@@ -3,7 +3,13 @@ from datetime import datetime
 from flask import Blueprint, render_template, session, request, flash, jsonify
 from app.utils.auth import login_required
 from app.utils.database import database
-from firebase_admin import db
+from app.models.teacher_services import (
+    get_teacher_data, get_teacher_classes, create_exam, get_teacher_exams,
+    update_exam_status, get_students_by_class_section, get_class_section_pairs,
+    update_student_status, update_bulk_student_status, manage_submission,
+    get_total_students, get_subject_name, calculate_completion_percentage
+)
+
 teacher_bp = Blueprint('teacher', __name__, url_prefix='/teacher')
 
 
@@ -11,7 +17,6 @@ teacher_bp = Blueprint('teacher', __name__, url_prefix='/teacher')
 @login_required(user_types=['teacher'])
 def dashboard():
     return render_template('teacher/dashboard.html')
-
 
 
 @teacher_bp.route('/generate_exam', methods=['GET', 'POST'])
@@ -26,37 +31,9 @@ def generate_exam():
         user_name = session.get('name', 'Unknown Teacher')
 
         try:
-            exams_ref = database.child('exams')
-            new_exam_ref = exams_ref.push()
-
-            exam_data = {
-                'title': data.get('title'),
-                'subject_id': data.get('subject_id'),
-                'class': int(data.get('class')),
-                'exam_type': data.get('exam_type'),
-                'exam_date': data.get('exam_date'),
-                'duration': data.get('duration'),
-                'created_by': user_id,
-                'created_by_name': user_name,
-                'total_marks': data.get('total_marks', 0),
-                'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'questions': {},
-                'exam_status': False
-            }
-
-            # Add questions to the exam
-            for index, question in data.get('questions', {}).items():
-                exam_data['questions'][index] = {
-                    'question_id': question.get('question_id'),
-                    'order': question.get('order'),
-                    'marks': question.get('marks', 0)
-                }
-
-            new_exam_ref.set(exam_data)
-
+            exam_id = create_exam(data, user_id, user_name)
             flash('Exam created successfully!', 'success')
-            return jsonify({'success': True, 'exam_id': new_exam_ref.key})
-
+            return jsonify({'success': True, 'exam_id': exam_id})
         except Exception as e:
             return {'error': str(e)}, 500
 
@@ -73,8 +50,7 @@ def get_subjects_by_class():
 
     try:
         user_email = session.get('user_id')
-        teacher_ref = database.child('administrators').child('teachers').child(user_email)
-        teacher_data = teacher_ref.get()
+        teacher_data = get_teacher_data(user_email)
 
         if not teacher_data or 'classes_teached' not in teacher_data:
             return {'subjects': []}, 200
@@ -97,12 +73,11 @@ def get_subjects_by_class():
 
             # Get subject details for each subject ID
             for subject_id in subject_ids:
-                subject_data = database.child('subjects').child(subject_id).get()
-                if subject_data:
-                    subjects_for_class.append({
-                        'id': subject_id,
-                        'name': subject_data.get('name', 'Unknown Subject')
-                    })
+                subject_name = get_subject_name(subject_id)
+                subjects_for_class.append({
+                    'id': subject_id,
+                    'name': subject_name
+                })
 
         return {'subjects': subjects_for_class}, 200
     except Exception as e:
@@ -161,60 +136,13 @@ def get_exams_and_students():
         if not teacher_email:
             return {'error': 'User not authenticated'}, 401
 
-        # 1. Get teacher's classes and subjects
-        teacher_ref = database.child('administrators').child('teachers').child(teacher_email)
-        teacher_data = teacher_ref.get()
+        # Get teacher's data and exams
+        teacher_data = get_teacher_data(teacher_email)
+        teacher_exams = get_teacher_exams(teacher_email)
 
-        if not teacher_data or 'classes_teached' not in teacher_data:
-            return jsonify({'exams': [], 'students': {}})
-
-        classes_teached = teacher_data.get('classes_teached', {})
-
-        # 2. Get all exams created by this teacher
-        exams_ref = database.child('exams')
-        all_exams = exams_ref.get()
-
-        teacher_exams = []
-        if all_exams:
-            for exam_id, exam_data in all_exams.items():
-                if exam_data.get('created_by') == teacher_email:
-                    # Get subject name
-                    subject_name = "Unknown Subject"
-                    subject_id = exam_data.get('subject_id')
-                    if subject_id:
-                        subject_data = database.child('subjects').child(subject_id).get()
-                        if subject_data and 'name' in subject_data:
-                            subject_name = subject_data['name']
-
-                    # Add subject name to exam data
-                    exam_data_with_id = dict(exam_data)
-                    exam_data_with_id['id'] = exam_id
-                    exam_data_with_id['subject_name'] = subject_name
-                    teacher_exams.append(exam_data_with_id)
-
-        # 3. Get students data for classes taught by this teacher
-        student_data = {}
-        class_section_pairs = []
-
-        # Collect all class-section combinations taught by this teacher
-        for class_id, class_data in classes_teached.items():
-            sections = class_data.get('sections', {})
-            for section, subject_ids in sections.items():
-                class_section_pairs.append((class_id, section))
-
-        # Get all students
-        students_ref = database.child('students')
-        all_students = students_ref.get()
-
-        if all_students:
-            for email, student in all_students.items():
-                student_class = str(student.get('class'))
-                student_section = student.get('section')
-
-                # Check if this student belongs to one of the teacher's classes
-                if (student_class, student_section) in class_section_pairs:
-                    # Include only relevant students
-                    student_data[email] = student
+        # Get student data for classes taught by this teacher
+        class_section_pairs = get_class_section_pairs(teacher_data)
+        student_data = get_students_by_class_section(class_section_pairs)
 
         return jsonify({
             'exams': teacher_exams,
@@ -225,62 +153,42 @@ def get_exams_and_students():
         return {'error': str(e)}, 500
 
 
-# In update_student_status route
 @teacher_bp.route('/api/update_student_status', methods=['POST'])
 @login_required(user_types=['teacher'])
-def update_student_status():
+def api_update_student_status():
     try:
         data = request.json
         student_email = data.get('student_email')
         new_status = data.get('status')
 
-        if not student_email or not new_status:
+        if not student_email or new_status is None:
             return {'error': 'Missing required fields'}, 400
 
-        # Update the student status - safely encode email for Firebase
-        safe_email = student_email.replace('.', ',')  # Replace dots with commas for Firebase
-        student_ref = database.child('students').child(safe_email)
-        current_student = student_ref.get()
-
-        if not current_student:
-            return {'error': 'Student not found'}, 404
-
-        # Update only the status field
-        student_ref.update({'status': new_status})
+        name = update_student_status(student_email, new_status)
 
         return jsonify({
             'success': True,
-            'message': f"Student {current_student.get('name', student_email)} status updated to {new_status}"
+            'message': f"Student {name} status updated to {new_status}"
         })
 
+    except ValueError as e:
+        return {'error': str(e)}, 404
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())  # Add detailed error logging
         return {'error': str(e)}, 500
 
 
-# Similarly in update_bulk_status route
 @teacher_bp.route('/api/update_bulk_status', methods=['POST'])
 @login_required(user_types=['teacher'])
-def update_bulk_status():
+def api_update_bulk_status():
     try:
         data = request.json
         student_emails = data.get('student_emails', [])
         new_status = data.get('status')
 
-        if not student_emails or not new_status:
+        if not student_emails or new_status is None:
             return {'error': 'Missing required fields'}, 400
 
-        # Update multiple students at once
-        updated_count = 0
-        for email in student_emails:
-            safe_email = email.replace('.', ',')  # Replace dots with commas for Firebase
-            student_ref = database.child('students').child(safe_email)
-            current_student = student_ref.get()
-
-            if current_student:
-                student_ref.update({'status': new_status})
-                updated_count += 1
+        updated_count = update_bulk_student_status(student_emails, new_status)
 
         return jsonify({
             'success': True,
@@ -288,8 +196,6 @@ def update_bulk_status():
         })
 
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())  # Add detailed error logging
         return {'error': str(e)}, 500
 
 
@@ -305,34 +211,16 @@ def add_submission_reason():
         if not student_email or not exam_id or not reason:
             return {'error': 'Missing required fields'}, 400
 
-        # Replace dots with commas for Firebase compatible key
-        safe_email = student_email.replace('.', ',')
-
-        # Create or update the submission record with reason
-        exam_ref = database.child('exams').child(exam_id)
-        current_exam = exam_ref.get()
-
-        if not current_exam:
-            return {'error': 'Exam not found'}, 404
-
-        # Update or create the submissions object
-        submissions = current_exam.get('submissions', {})
-        submissions[safe_email] = {
-            'reason': reason,
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-
-        # Update the exam with the new submissions data
-        exam_ref.update({'submissions': submissions})
+        manage_submission(student_email, exam_id, reason)
 
         return jsonify({
             'success': True,
-            'message': f"Submission reason added for student"
+            'message': "Submission reason added for student"
         })
 
+    except ValueError as e:
+        return {'error': str(e)}, 404
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())
         return {'error': str(e)}, 500
 
 
@@ -347,38 +235,22 @@ def delete_submission():
         if not student_email or not exam_id:
             return {'error': 'Missing required fields'}, 400
 
-        # Replace dots with commas for Firebase compatible key
-        safe_email = student_email.replace('.', ',')
+        success = manage_submission(student_email, exam_id, delete=True)
 
-        # Get the exam data
-        exam_ref = database.child('exams').child(exam_id)
-        current_exam = exam_ref.get()
-
-        if not current_exam:
-            return {'error': 'Exam not found'}, 404
-
-        # Get submissions and remove the specific student
-        submissions = current_exam.get('submissions', {})
-
-        if safe_email in submissions:
-            del submissions[safe_email]
-
-            # Update the exam with the modified submissions data
-            exam_ref.update({'submissions': submissions})
-
+        if success:
             return jsonify({
                 'success': True,
-                'message': f"Submission deleted successfully"
+                'message': "Submission deleted successfully"
             })
         else:
             return jsonify({
                 'success': False,
-                'message': f"No submission found for this student"
+                'message': "No submission found for this student"
             })
 
+    except ValueError as e:
+        return {'error': str(e)}, 404
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())
         return {'error': str(e)}, 500
 
 
@@ -393,39 +265,276 @@ def toggle_exam_status():
         if exam_id is None or new_status is None:
             return {'error': 'Missing required fields'}, 400
 
-        # Update the exam status
-        exam_ref = database.child('exams').child(exam_id)
-        current_exam = exam_ref.get()
-
-        if not current_exam:
-            return {'error': 'Exam not found'}, 404
-
-        # Make sure only the teacher who created the exam can toggle its status
-        if current_exam.get('created_by') != session.get('user_id'):
-            return {'error': 'Unauthorized to modify this exam'}, 403
-
-        # Update only the exam_status field
-        exam_ref.update({'exam_status': new_status})
+        update_exam_status(exam_id, new_status)
 
         return jsonify({
             'success': True,
             'message': f"Exam status updated to {'enabled' if new_status else 'disabled'}"
         })
 
+    except ValueError as e:
+        return {'error': str(e)}, 403 if "Unauthorized" in str(e) else 404
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())
         return {'error': str(e)}, 500
+
 
 @teacher_bp.route('/api/total_questions_by_teacher', methods=['GET'])
 @login_required(user_types=['teacher'])
 def questions_by_teacher():
     try:
         teacher_email = session.get('user_id')
-        print(teacher_email)
         if not teacher_email:
             return {'error': 'User not authenticated'}, 401
-        questions_total = database.child('administrators').child('teachers').child(teacher_email).child('questions_created').get()
+
+        teacher_data = get_teacher_data(teacher_email)
+        questions_total = teacher_data.get('questions_created', 0)
+
         return jsonify({'questions_created': questions_total})
     except Exception as e:
         return {'error': str(e)}, 500
+
+
+@teacher_bp.route('/api/recent_activity', methods=['GET'])
+@login_required(user_types=['teacher'])
+def get_recent_activity():
+    try:
+        teacher_email = session.get('user_id')
+        teacher_exams = get_teacher_exams(teacher_email)
+        activity_items = []
+
+        for exam_data in teacher_exams:
+            # Calculate submissions percentage if any
+            submissions = exam_data.get('submissions', {})
+            submission_count = len(submissions) - (1 if ' ' in submissions else 0)  # Subtract empty entry
+
+            activity_items.append({
+                'type': 'exam_created',
+                'title': f"{exam_data.get('title')}",
+                'description': f"Created for Class {exam_data.get('class')} - {exam_data.get('subject_name')}",
+                'status': 'Active' if exam_data.get('exam_status') else 'Inactive',
+                'status_class': 'success' if exam_data.get('exam_status') else 'warning',
+                'timestamp': exam_data.get('created_at'),
+                'submission_count': submission_count
+            })
+
+        # Sort activities by timestamp (newest first)
+        activity_items.sort(key=lambda x: datetime.strptime(x['timestamp'], '%Y-%m-%d %H:%M:%S'), reverse=True)
+
+        # Limit to most recent 5 activities
+        return jsonify({'activities': activity_items[:5]})
+
+    except Exception as e:
+        flash(f"Error in recent activity: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@teacher_bp.route('/api/class_performance', methods=['GET'])
+@login_required(user_types=['teacher'])
+def get_class_performance():
+    try:
+        teacher_email = session.get('user_id')
+        teacher_data = get_teacher_data(teacher_email)
+        classes_teached = get_teacher_classes(teacher_data)
+
+        if not classes_teached:
+            return jsonify({'class_performance': []})
+
+        class_performance = []
+        teacher_exams = get_teacher_exams(teacher_email)
+
+        # Track submissions by class
+        class_submissions = {}
+        class_total_students = {}
+
+        # First, calculate how many students are in each class
+        for class_id, class_data in classes_teached.items():
+            sections = class_data.get('sections', {})
+            class_total_students[class_id] = 0
+
+            # Count students in each section
+            for section in sections:
+                class_ref = database.child('classes').child(class_id).child(section).get()
+                if class_ref:
+                    # Subtract 1 for the null entry at index 0
+                    student_count = len(class_ref) - 1 if isinstance(class_ref, list) else 0
+                    class_total_students[class_id] += student_count
+
+        # Then calculate submission rates for exams
+        for exam_data in teacher_exams:
+            exam_class = str(exam_data.get('class'))
+            submissions = exam_data.get('submissions', {})
+
+            # Remove the empty submission placeholder
+            submission_count = len(submissions) - (1 if ' ' in submissions else 0)
+
+            if exam_class not in class_submissions:
+                class_submissions[exam_class] = {
+                    'total_submissions': 0,
+                    'expected_submissions': 0
+                }
+
+            class_submissions[exam_class]['total_submissions'] += submission_count
+
+            # Expected submissions is the total students in that class
+            expected = class_total_students.get(exam_class, 0)
+            class_submissions[exam_class]['expected_submissions'] += expected
+
+        # Calculate completion percentage for each class
+        for class_id, data in class_submissions.items():
+            if data['expected_submissions'] > 0:
+                completion_percentage = (data['total_submissions'] / data['expected_submissions']) * 100
+
+                # Determine color based on completion percentage
+                color = 'success'
+                if completion_percentage < 60:
+                    color = 'warning'
+                if completion_percentage < 40:
+                    color = 'danger'
+
+                class_performance.append({
+                    'class': f"Class {class_id}",
+                    'percentage': round(completion_percentage, 1),
+                    'color': color
+                })
+
+        return jsonify({'class_performance': class_performance})
+
+    except Exception as e:
+        flash(f"Error in class performance: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@teacher_bp.route('/api/pending_submissions', methods=['GET'])
+@login_required(user_types=['teacher'])
+def get_pending_submissions():
+    try:
+        teacher_email = session.get('user_id')
+        teacher_data = get_teacher_data(teacher_email)
+        classes_teached = get_teacher_classes(teacher_data)
+
+        if not classes_teached:
+            return jsonify({'exam_submissions': {}})
+
+        # Get all students in teacher's classes
+        students_by_class = {}
+        for class_id, class_data in classes_teached.items():
+            sections = class_data.get('sections', {})
+            students_by_class[class_id] = []
+            for section in sections:
+                # Get students in this section
+                students_ref = database.child('students').get()
+                if students_ref:
+                    for email, student in students_ref.items():
+                        if str(student.get('class')) == class_id and student.get('section') == section:
+                            students_by_class[class_id].append({
+                                'email': email.replace(',', '.'),  # Convert back from Firebase format
+                                'name': student.get('name', 'Unknown Student'),
+                                'roll_no': student.get('rollno', 'N/A')
+                            })
+
+        # Get active exams for each class taught by the teacher
+        teacher_exams = get_teacher_exams(teacher_email)
+        active_exams = []
+
+        today = datetime.now().strftime('%Y-%m-%d')
+        for exam_data in teacher_exams:
+            if exam_data.get('exam_status'):
+                exam_date = exam_data.get('exam_date')
+
+                # Check if the exam is current or past due
+                if exam_date and exam_date <= today:
+                    active_exams.append({
+                        'id': exam_data.get('id'),
+                        'title': exam_data.get('title'),
+                        'class': exam_data.get('class'),
+                        'subject': exam_data.get('subject_name'),
+                        'date': exam_date,
+                        'submissions': exam_data.get('submissions', {})
+                    })
+
+        # Group pending submissions by exam
+        exam_submissions = {}
+
+        for exam in active_exams:
+            exam_id = exam.get('id')
+            exam_class = str(exam.get('class'))
+            submissions = exam.get('submissions', {})
+
+            submitted_emails = set()
+            for key in submissions:
+                submitted_emails.add(key.replace(',', '.'))
+
+            # Find students who haven't submitted
+            pending_students = []
+            for student in students_by_class.get(exam_class, []):
+                student_email = student.get('email')
+                if student_email not in submitted_emails:
+                    exam_date = datetime.strptime(exam.get('date'), '%Y-%m-%d')
+                    days_overdue = (datetime.now() - exam_date).days
+
+                    status = 'overdue' if days_overdue > 0 else 'due_soon' if days_overdue >= -2 else 'on_track'
+
+                    pending_students.append({
+                        'student_name': student.get('name'),
+                        'student_email': student_email,
+                        'days_overdue': days_overdue,
+                        'status': status,
+                        'initials': ''.join([name[0].upper() for name in student.get('name', 'US').split()[:2]])
+                    })
+
+            # Only add exams that have pending submissions
+            if pending_students:
+                # Sort students by days overdue (most overdue first)
+                pending_students.sort(key=lambda x: x['days_overdue'], reverse=True)
+
+                exam_submissions[exam_id] = {
+                    'title': exam.get('title'),
+                    'class': exam.get('class'),
+                    'subject': exam.get('subject'),
+                    'date': exam.get('date'),
+                    'pending_students': pending_students
+                }
+
+        return jsonify({'exam_submissions': exam_submissions})
+
+    except Exception as e:
+        flash(f"Error in pending submissions: {str(e)}")
+        return jsonify({'error': str(e)}), 500
+
+
+@teacher_bp.route('/api/dashboard_stats', methods=['GET'])
+@login_required(user_types=['teacher'])
+def get_dashboard_stats():
+    try:
+        teacher_email = session.get('user_id')
+        teacher_data = get_teacher_data(teacher_email)
+
+        if not teacher_data:
+            return jsonify({'error': 'Teacher data not found'}), 404
+
+        # Get classes taught by this teacher
+        classes_teached = get_teacher_classes(teacher_data)
+
+        # 1. Count total students
+        total_students = get_total_students(classes_teached)
+
+        # 2. Count active exams
+        teacher_exams = get_teacher_exams(teacher_email)
+        active_exams = sum(1 for exam in teacher_exams if exam.get('exam_status'))
+
+        # 3. Count questions in question bank
+        total_questions = teacher_data.get('questions_created', 0)
+
+        # 4. Calculate average completion percentage
+        avg_completion = calculate_completion_percentage(classes_teached, teacher_exams)
+
+        return jsonify({
+            'total_students': total_students,
+            'active_exams': active_exams,
+            'total_questions': total_questions,
+            'avg_completion': avg_completion
+        })
+
+    except Exception as e:
+        flash(f"Error in dashboard stats: {str(e)}")
+        return jsonify({'error': str(e)}), 500

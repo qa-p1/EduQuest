@@ -156,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
             <div class="card-body">
-                <p class="card-text question-preview text-muted">No question selected</p>
+                <p class="card-text question-preview">No question selected</p>
                 <div class="d-flex justify-content-between">
                     <button type="button" class="btn btn-primary btn-sm select-question" data-index="${index}">
                         <i class="fas fa-plus-circle"></i> Select Question
@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="text-center p-4">
                     <div class="mb-4">
                         <i class="fas fa-question-circle fa-4x text-secondary"></i>
-                        <p class="text-muted mt-3">No questions found for this subject and class.</p>
+                        <p class="text-light mt-3">No questions found for this subject and class.</p>
                     </div>
                     <div class="mt-4">
                         <p><strong>Can't find your question?</strong></p>
@@ -325,7 +325,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <span class="badge bg-info">${questionTypeNames[question.question_type] || question.question_type}</span>
                 </div>
             </div>
-            <small class="text-muted">Created by: ${question.created_by_name}</small>`;
+            <small class="text-light">Created by: ${question.created_by_name}</small>`;
 
             listItem.dataset.questionId = question.id;
 
@@ -412,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     noResults.innerHTML = `
                         <div class="mb-3">
                             <i class="fas fa-question-circle fa-4x text-secondary"></i>
-                            <p class="text-muted mt-2">No questions match your filters.</p>
+                            <p class="text-light mt-2">No questions match your filters.</p>
                         </div>
                         <div>
                             <p><strong>Can't find your question?</strong></p>
@@ -480,7 +480,7 @@ document.addEventListener('DOMContentLoaded', function() {
         boxDiv.querySelector('.question-difficulty').className = `badge ${difficultyClasses[question.difficulty] || 'bg-secondary'} question-difficulty`;
 
         boxDiv.querySelector('.question-preview').textContent = question.text;
-        boxDiv.querySelector('.question-preview').classList.remove('text-muted');
+        boxDiv.querySelector('.question-preview').classList.remove('text-light');
 
         boxDiv.querySelector('.select-question').textContent = 'Change Question';
         boxDiv.querySelector('.remove-question').classList.remove('d-none');
@@ -514,7 +514,7 @@ document.addEventListener('DOMContentLoaded', function() {
         boxDiv.querySelector('.question-difficulty').className = 'badge bg-secondary question-difficulty';
 
         boxDiv.querySelector('.question-preview').textContent = 'No question selected';
-        boxDiv.querySelector('.question-preview').classList.add('text-muted');
+        boxDiv.querySelector('.question-preview').classList.add('text-light');
 
         boxDiv.querySelector('.select-question').textContent = 'Select Question';
         boxDiv.querySelector('.select-question').innerHTML = '<i class="fas fa-plus-circle"></i> Select Question';
@@ -551,7 +551,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         ${Object.entries(options).map(([key, value]) =>
                             `<li>${value}</li>`).join('')}
                     </ol>
-                    <p><small class="text-muted">Difficulty: ${question.difficulty}</small></p>
+                    <p><small class="text-light">Difficulty: ${question.difficulty}</small></p>
                 `;
                 break;
 
@@ -559,7 +559,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 previewHtml = `
                     <p><strong>Fill in the blanks:</strong></p>
                     <p>${question.text}</p>
-                    <p><small class="text-muted">Difficulty: ${question.difficulty}</small></p>
+                    <p><small class="text-light">Difficulty: ${question.difficulty}</small></p>
                 `;
                 break;
 
@@ -594,7 +594,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </ol>
                         </div>
                     </div>
-                    <p><small class="text-muted">Difficulty: ${question.difficulty}</small></p>
+                    <p><small class="text-light">Difficulty: ${question.difficulty}</small></p>
                 `;
                 break;
 
@@ -609,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <li>Assertion is true but Reason is false</li>
                         <li>Assertion is false but Reason is true</li>
                     </ol>
-                    <p><small class="text-muted">Difficulty: ${question.difficulty}</small></p>
+                    <p><small class="text-light">Difficulty: ${question.difficulty}</small></p>
                 `;
                 break;
 
@@ -627,14 +627,14 @@ document.addEventListener('DOMContentLoaded', function() {
                             </ol>
                         </li>
                     </ol>
-                    <p><small class="text-muted">Difficulty: ${question.difficulty}</small></p>
+                    <p><small class="text-light">Difficulty: ${question.difficulty}</small></p>
                 `;
                 break;
 
             default:
                 previewHtml = `
                     <p>${question.text}</p>
-                    <p><small class="text-muted">Difficulty: ${question.difficulty}</small></p>
+                    <p><small class="text-light">Difficulty: ${question.difficulty}</small></p>
                 `;
         }
 

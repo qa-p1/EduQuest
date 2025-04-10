@@ -183,7 +183,7 @@ function createExamCard(exam, studentsByClassSection, examIndex) {
     });
     const examStatus = exam.exam_status !== false;
     examDiv.innerHTML = `
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center"
              role="button" data-bs-toggle="collapse" data-bs-target="#${collapseId}" aria-expanded="true">
             <div class="d-flex align-items-center">
                 <i class="fas fa-chevron-down me-2 collapse-icon"></i>
@@ -224,7 +224,7 @@ function createExamCard(exam, studentsByClassSection, examIndex) {
 
                 <h6 class="mt-4 mb-3"><i class="fas fa-users"></i> Students</h6>
 
-                <div class="accordion" id="accordion-classes-${examId}">
+                <div class="accordion" id="accordion-classes-${examId}" data-bs-theme="dark">
                     ${generateClassSections(classStudents, examId, exam)}
                 </div>
             </div>
@@ -328,7 +328,7 @@ function generateClassSections(classStudents, examId, exam) {
                     <div class="accordion-body">
                         <div class="table-responsive">
                             <table class="table table-striped table-hover">
-                                <thead class="table-light">
+                                <thead">
                                     <tr>
                                         <th>Roll No</th>
                                         <th>Name</th>
@@ -790,7 +790,7 @@ function updateSubmissionCell(studentEmail, examId, reason) {
         const formattedReason = reason.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         cell.innerHTML = `
             <div>
-                <span class="badge bg-info text-dark">${formattedReason}</span>
+                <span class="badge bg-info text-light">${formattedReason}</span>
                 <div class="btn-group btn-group-sm ms-2">
                     <button type="button" class="btn btn-outline-secondary edit-reason-btn"
                         data-student-email="${studentEmail}"

@@ -81,8 +81,8 @@
             const newBlank = `
                 <div class="blank-item">
                     <div class="input-group">
-                        <span class="input-group-text">Blank ${blankCounter}</span>
-                        <input type="text" class="form-control" name="blank${blankCounter}" placeholder="Correct answer">
+                        <span class="input-group-text bg-dark text-light">Blank ${blankCounter}</span>
+                        <input type="text" class="form-control bg-dark text-light" name="blank${blankCounter}" placeholder="Correct answer">
                         <button type="button" class="btn btn-outline-danger remove-blank-btn">
                             <i class="fas fa-times"></i>
                         </button>
@@ -109,10 +109,10 @@
                 <div class="column-item">
                     <div class="row">
                         <div class="col-md-5">
-                            <input type="text" class="form-control" name="column_a_${columnCounter}" placeholder="Column A item">
+                            <input type="text" class="form-control bg-dark text-light" name="column_a_${columnCounter}" placeholder="Column A item">
                         </div>
                         <div class="col-md-5">
-                            <input type="text" class="form-control" name="column_b_${columnCounter}" placeholder="Column B item">
+                            <input type="text" class="form-control bg-dark text-light" name="column_b_${columnCounter}" placeholder="Column B item">
                         </div>
                         <div class="col-md-2">
                             <button type="button" class="btn btn-outline-danger remove-column-btn">
@@ -142,22 +142,22 @@
                 <div class="case-question-item">
                     <div class="mb-3">
                         <label for="case_question_${caseQuestionCounter}" class="form-label">Question ${caseQuestionCounter}</label>
-                        <input type="text" class="form-control" id="case_question_${caseQuestionCounter}" name="case_question_${caseQuestionCounter}" placeholder="Enter question text">
+                        <input type="text" class="form-control bg-dark text-light" id="case_question_${caseQuestionCounter}" name="case_question_${caseQuestionCounter}" placeholder="Enter question text">
                     </div>
                     <div class="row mb-2">
                         <div class="col-md-6">
-                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option1" placeholder="Option 1">
+                            <input type="text" class="form-control bg-dark text-light" name="case_q${caseQuestionCounter}_option1" placeholder="Option 1">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option2" placeholder="Option 2">
+                            <input type="text" class="form-control bg-dark text-light" name="case_q${caseQuestionCounter}_option2" placeholder="Option 2">
                         </div>
                     </div>
                     <div class="row mb-2">
                         <div class="col-md-6">
-                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option3" placeholder="Option 3">
+                            <input type="text" class="form-control bg-dark text-light" name="case_q${caseQuestionCounter}_option3" placeholder="Option 3">
                         </div>
                         <div class="col-md-6">
-                            <input type="text" class="form-control" name="case_q${caseQuestionCounter}_option4" placeholder="Option 4">
+                            <input type="text" class="form-control bg-dark text-light" name="case_q${caseQuestionCounter}_option4" placeholder="Option 4">
                         </div>
                     </div>
                     <div class="mb-3">

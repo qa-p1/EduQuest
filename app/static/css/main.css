@@ -1,24 +1,30 @@
 @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=JetBrains+Mono&family=Poppins:wght@600;700&display=swap');
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 @import url('https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css');
+
 :root {
-  --primary-color: #4361ee;
-  --primary-hover: #3a56d4;
-  --secondary-color: #60676e;
-  --secondary-hover: #4a4f55;
-  --danger-color: #ef476f;
-  --danger-hover: #d63d63;
+  --primary-color: #6c8bff;
+  --primary-hover: #5070e0;
+  --primary-light: #1f2b50;
+  --secondary-color: #9ca3af;
+  --secondary-hover: #7f8799;
+  --danger-color: #ff6b8e;
+  --danger-hover: #e05579;
   --success-color: #06d6a0;
-  --light-color: #f8f9fa;
-  --dark-color: #212529;
-  --border-color: #dee2e6;
-  --shadow: rgba(0, 0, 0, 0.1);
+  --warning-color: #ffd166;
+  --info-color: #4cc9f0;
+  --light-color: #374151;
+  --dark-color: #e2e8f0;
+  --text-muted: #ffffff;
+  --border-color: #2d3748;
+  --font-main: 'Quicksand', 'Segoe UI', sans-serif;
+  --font-heading: 'Poppins', sans-serif;
+  --bg-color: #121826;
+  --card-bg: #1e293b;
+  --hover-bg: #2c3a50;
+  --shadow: rgba(0, 0, 0, 0.3);
 
   --sidebar-width: 250px;
-  --text-muted: #64748b;
-
-  --font-main: 'Quicksand', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  --font-heading: 'Poppins', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
   --spacing-xs: 0.25rem;
@@ -44,7 +50,7 @@ html {
 
 body {
   font-family: var(--font-main);
-  background-color: var(--light-color);
+  background-color: var(--bg-color);
   color: var(--dark-color);
   margin: 0;
   padding: 1rem;
@@ -65,7 +71,7 @@ body {
   max-width: 800px;
   margin: var(--spacing-xl) auto;
   padding: var(--spacing-lg);
-  background-color: white;
+  background-color: var(--card-bg);
   border-radius: var(--radius-lg);
   box-shadow: 0 0.5rem 1rem var(--shadow);
 }
@@ -84,6 +90,7 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: var(--spacing-md);
   font-weight: 600;
   line-height: 1.2;
+  color: var(--dark-color);
 }
 
 .header h1 {
@@ -130,7 +137,7 @@ h1, h2, h3, h4, h5, h6 {
   left: 0;
   width: var(--sidebar-width);
   height: 100vh;
-  background-color: white;
+  background-color: var(--card-bg);
   box-shadow: 2px 0 8px var(--shadow);
   z-index: 1000;
   transform: translateX(-100%);
@@ -194,7 +201,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .nav-links li a:hover,
 .nav-links li a.active {
-  background-color: var(--light-color);
+  background-color: var(--hover-bg);
   color: var(--primary-color);
   transform: translateX(4px);
 }
@@ -244,7 +251,7 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 400;
   line-height: 1.5;
   color: var(--dark-color);
-  background-color: #fff;
+  background-color: var(--light-color);
   background-clip: padding-box;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -254,14 +261,19 @@ h1, h2, h3, h4, h5, h6 {
 .form-control:focus {
   border-color: var(--primary-color);
   outline: 0;
-  box-shadow: 0 0 0 0.25rem rgba(67, 97, 238, 0.25);
+  box-shadow: 0 0 0 0.25rem rgba(108, 139, 255, 0.25);
 }
 
-.form-select{height: 3rem; cursor: pointer}
+.form-select {
+  height: 3rem;
+  cursor: pointer;
+  background-color: var(--light-color);
+  color: var(--dark-color);
+}
 
 select.form-control {
   appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23e2e8f0' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
   background-repeat: no-repeat;
   background-position: right 0.75rem center;
   background-size: 16px 12px;
@@ -278,6 +290,7 @@ textarea.form-control {
   margin-top: 5px;
   font-weight: 500;
   display: block;
+  color: var(--dark-color);
 }
 
 .btn {
@@ -371,7 +384,7 @@ textarea.form-control {
 }
 
 .table tbody tr:hover {
-  background-color: rgba(0, 0, 0, 0.03);
+  background-color: var(--hover-bg);
 }
 
 .alert {
@@ -383,9 +396,9 @@ textarea.form-control {
 }
 
 .alert-info {
-  color: #055160;
-  background-color: #cff4fc;
-  border-color: #b6effb;
+  color: var(--info-color);
+  background-color: rgba(76, 201, 240, 0.1);
+  border-color: rgba(76, 201, 240, 0.3);
 }
 
 .flash-messages {
@@ -398,15 +411,20 @@ textarea.form-control {
   flex-direction: column;
   min-width: 0;
   word-wrap: break-word;
-  background-color: #fff;
+  background-color: var(--card-bg);
   background-clip: border-box;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  color:white;
 }
 
 .card:hover {
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+}
+.card-text {
+  color: white;
 }
 
 .card-img-top {
@@ -424,6 +442,70 @@ textarea.form-control {
   margin-bottom: 0.75rem;
 }
 
+/* Bootstrap dark mode overrides */
+.bg-light {
+  background-color: var(--card-bg) !important;
+}
+
+.bg-dark {
+  background-color: var(--bg-color) !important;
+}
+
+.text-dark {
+  color: var(--dark-color) !important;
+}
+
+.text-light {
+  color: var(--dark-color) !important;
+}
+
+.border {
+  border-color: var(--border-color) !important;
+}
+
+.modal-content {
+  background-color: var(--card-bg);
+  color: var(--dark-color);
+}
+
+.dropdown-menu {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+.dropdown-item {
+  color: var(--dark-color);
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+  background-color: var(--hover-bg);
+  color: var(--primary-color);
+}
+
+.list-group-item {
+  background-color: var(--card-bg);
+  color: var(--dark-color);
+  border-color: var(--border-color);
+}
+
+.list-group-item-action:hover {
+  background-color: var(--hover-bg);
+}
+
+.navbar {
+  background-color: var(--card-bg) !important;
+}
+
+.navbar-light .navbar-nav .nav-link {
+  color: rgba(226, 232, 240, 0.8);
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+  color: var(--dark-color);
+}
+.form-control::placeholder{
+  color: white;
+}
 @keyframes slideDown {
   from {
     opacity: 0;

@@ -1,0 +1,87 @@
+{% extends "menu.html" %}
+
+{% block title %}EduQuest - Available Exams{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4">Available Exams</h1>
+        <div class="alert {% if student_status == 'active' %}alert-success{% else %}alert-warning{% endif %} d-flex align-items-center mb-4">
+            <i class="fas {% if student_status == 'active' %}fa-check-circle{% else %}fa-exclamation-circle{% endif %} me-3 fs-3"></i>
+            <div>
+                <strong>Account Status:</strong> {% if student_status == 'active' %}
+                    Your account is active. You can participate in exams.
+                {% else %}
+                    Your account is currently inactive. Please contact your teacher to activate your account.
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-2">
+    {% if exams %}
+        {% for exam in exams %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 {% if not exam.exam_status %}border-secondary opacity-75{% endif %}">
+                    <div class="card-header {% if exam.exam_status %}bg-primary text-white{% else %}bg-secondary text-white{% endif %}">
+                        <h5 class="card-title mb-0">{{ exam.title }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text"><strong>Date:</strong> {{ exam.exam_date }}</p>
+                        <p class="card-text"><strong>Duration:</strong> {{ exam.duration }} minutes</p>
+                        <p class="card-text"><strong>Created by:</strong> {{ exam.created_by_name }}</p>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <span class="badge {% if exam.exam_status %}bg-success{% else %}bg-secondary{% endif %} p-2">
+                                {% if exam.exam_status %}Active{% else %}Inactive{% endif %}
+                            </span>
+
+                            {% if exam.submitted %}
+                                <span class="badge bg-info p-2">Submitted</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        {% if exam.exam_status and not exam.submitted %}
+                            {% if student_status == 'active' %}
+                                <a href="{{ url_for('student.take_exam', exam_id=exam.id) }}" class="btn btn-primary w-100">Take Exam</a>
+                            {% else %}
+                                <button class="btn btn-secondary w-100" disabled>Take Exam</button>
+                                <small class="text-muted d-block text-center mt-1">Account needs to be active</small>
+                            {% endif %}
+                        {% elif exam.submitted %}
+                            <button class="btn btn-success w-100" disabled>Exam Submitted</button>
+                        {% else %}
+                            <button class="btn btn-secondary w-100" disabled>Exam Not Active</button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                No exams are currently available for you.
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title"><i class="fas fa-lightbulb me-2"></i>Exam Instructions</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">Make sure you have a stable internet connection before starting an exam.</li>
+                    <li class="list-group-item">Once you start an exam, you must complete it within the specified duration.</li>
+                    <li class="list-group-item">Your answers are automatically saved when you submit the exam.</li>
+                    <li class="list-group-item">If the exam is not showing up, please contact your teacher.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
