@@ -1,24 +1,507 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduQuest - What Are You?</title>
 
-{% block title %}Quizzer - Login{% endblock %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <style>
+        body{
+            overflow: hidden;
+        }
+        .login-container {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
 
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/login.css') }}">
-<div class="text-center">
-    <h1 class="title">Login</h1>
+        .triangle-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: hidden;
+            z-index: 0;
+        }
 
-    {% if user_type %}
-    <h4 class="mb-4">Sign in as {{ user_type|title }}</h4>
-    {% endif %}
+        .triangle {
+            position: absolute;
+            opacity: 0.05;
+            border-style: solid;
+            transform-origin: center;
+            transition: all 1s ease;
+        }
 
-    <form action="{{ url_for('auth.login') }}" method="post" class="d-flex flex-column align-items-center">
-        <input type="hidden" name="user_type" value="{{ user_type }}">
+        .triangle-1 {
+            border-width: 0 300px 520px 300px;
+            border-color: transparent transparent var(--primary-color) transparent;
+            top: -200px;
+            left: -100px;
+            transform: rotate(-30deg);
+        }
 
-        <input type="email" name="email" class="form-control" placeholder="Enter your email" required>
-        <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+        .triangle-2 {
+            border-width: 0 250px 432px 250px;
+            border-color: transparent transparent var(--primary-color) transparent;
+            bottom: -200px;
+            right: -100px;
+            transform: rotate(30deg);
+        }
 
-        <button type="submit" class="btn btn-primary">Login</button>
-        <a href="{{ url_for('auth.index') }}" class="btn btn-secondary">Back</a>
-    </form>
-</div>
-{% endblock %}
+        .triangle-3 {
+            border-width: 0 200px 346px 200px;
+            border-color: transparent transparent var(--primary-hover) transparent;
+            top: 50%;
+            left: 60%;
+            transform: rotate(15deg) translateY(-50%);
+        }
+
+        .login-box {
+            display: flex;
+            width: 100%;
+            max-width: 900px;
+            min-height: 500px;
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-area {
+            width: 40%;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary-color));
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .logo-area::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            pointer-events: none;
+        }
+
+        .app-name {
+            font-family: var(--font-heading);
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 1.5rem;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .app-name span {
+            color: var(--warning-color);
+        }
+
+        .user-role {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .user-role i {
+            font-size: 2.5rem;
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-role span {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .login-form-area {
+            width: 60%;
+            padding: 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-field label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .form-input {
+            padding: 0.8rem 1rem;
+            border: 2px solid rgba(108, 139, 255, 0.1);
+            border-radius: var(--radius-md);
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(108, 139, 255, 0.1);
+            outline: none;
+        }
+
+        .password-input {
+            position: relative;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--secondary-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .toggle-password:hover {
+            color: var(--primary-color);
+        }
+
+        .form-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+        }
+
+        .remember-me input {
+            accent-color: var(--primary-color);
+        }
+
+        .forgot-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .forgot-link:hover {
+            color: var(--primary-hover);
+            text-decoration: underline;
+        }
+
+        .form-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .submit-btn {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 139, 255, 0.3);
+        }
+
+        .submit-btn i {
+            transition: transform 0.3s ease;
+        }
+
+        .submit-btn:hover i {
+            transform: translateX(4px);
+        }
+
+        .back-btn {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--dark-color);
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+            border: 1px solid var(--border-color);
+        }
+
+        .back-btn:hover {
+            background-color: var(--hover-bg);
+            color: var(--primary-color);
+        }
+
+        /* Enhanced Mobile Responsiveness */
+        @media (max-width: 992px) {
+            .login-container {
+                padding: 1.5rem;
+            }
+
+            .login-box {
+                max-width: 700px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                padding: 1rem;
+            }
+
+            .login-box {
+                flex-direction: column;
+                max-width: 450px;
+                min-height: auto;
+            }
+
+            .logo-area {
+                width: 100%;
+                padding: 2rem 1.5rem;
+            }
+
+            .login-form-area {
+                width: 100%;
+                padding: 2rem 1.5rem;
+            }
+
+            .app-name {
+                font-size: 2.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .user-role i {
+                width: 80px;
+                height: 80px;
+                font-size: 2rem;
+            }
+
+            .user-role {
+                margin-top: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 0.75rem;
+            }
+
+            .login-box {
+                border-radius: var(--radius-md);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            }
+
+            .logo-area {
+                padding: 1.5rem 1rem;
+            }
+
+            .login-form-area {
+                padding: 1.5rem 1rem;
+            }
+
+            .app-name {
+                font-size: 2.2rem;
+            }
+
+            .user-role i {
+                width: 70px;
+                height: 70px;
+                font-size: 1.8rem;
+            }
+
+            .user-role span {
+                font-size: 1.3rem;
+            }
+
+            .form-options {
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: flex-start;
+            }
+
+            .submit-btn, .back-btn {
+                padding: 0.75rem;
+            }
+        }
+
+        /* Flash messages styling */
+        .flash-messages {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .alert {
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: var(--radius-md);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+    </style>
+
+</head>
+<body>
+<div class="login-container">
+
+        <div class="triangle-bg">
+            <div class="triangle triangle-1"></div>
+            <div class="triangle triangle-2"></div>
+            <div class="triangle triangle-3"></div>
+        </div>
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for message in messages %}
+                    <div class="alert alert-info">{{ message }}</div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+        <div class="login-box">
+            <div class="logo-area">
+                <h1 class="app-name">Edu<span>Quest</span></h1>
+                <div class="user-role">
+                    <i class="fas {{ 'fa-user-graduate' if user_type == 'student' else 'fa-chalkboard-teacher' if user_type == 'teacher' else 'fa-user-shield' }}"></i>
+                    <span>{{ user_type|title if user_type else 'Login' }}</span>
+                </div>
+            </div>
+
+            <div class="login-form-area">
+                <form action="{{ url_for('auth.login') }}" method="post" class="login-form">
+                    <input type="hidden" name="user_type" value="{{ user_type }}">
+
+                    <div class="form-field">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" class="form-input" required autocomplete="email">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="password">Password</label>
+                        <div class="password-input">
+                            <input type="password" id="password" name="password" class="form-input" required>
+                            <button type="button" class="toggle-password" tabindex="-1">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-options">
+                        <label class="remember-me">
+                            <input type="checkbox" name="remember">
+                            <span>Remember me</span>
+                        </label>
+                        <a href="#" class="forgot-link">Forgot password?</a>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">
+                            <span>Sign In</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+
+                        <a href="{{ url_for('auth.index') }}" class="back-btn">
+                            <i class="fas fa-chevron-left"></i>
+                            <span>Back to Selection</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const togglePassword = document.querySelector('.toggle-password');
+        const passwordInput = document.querySelector('#password');
+
+        togglePassword.addEventListener('click', function() {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            this.querySelector('i').classList.toggle('fa-eye');
+            this.querySelector('i').classList.toggle('fa-eye-slash');
+        });
+
+        // Add animation for triangles
+        const triangles = document.querySelectorAll('.triangle');
+        setInterval(() => {
+            triangles.forEach(triangle => {
+                const randomRotate = Math.random() * 10 - 5;
+                const currentRotate = parseFloat(triangle.style.transform.replace(/[^\d.-]/g, '')) || 0;
+                triangle.style.transform = triangle.style.transform.replace(/rotate\([^)]*\)/, `rotate(${currentRotate + randomRotate}deg)`);
+            });
+        }, 5000);
+
+        // Auto-hide flash messages after 5 seconds
+        const flashMessages = document.querySelectorAll('.alert');
+        if (flashMessages.length > 0) {
+            setTimeout(() => {
+                flashMessages.forEach(message => {
+                    message.style.opacity = '0';
+                    message.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => message.remove(), 500);
+                });
+            }, 5000);
+        }
+    });
+</script>
+</body>
+</html>

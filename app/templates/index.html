@@ -1,16 +1,424 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduQuest - What Are You?</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=JetBrains+Mono&family=Poppins:wght@600;700&display=swap');
+        @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css');
 
-{% block title %}EduQuest{% endblock %}
+        :root {
+            --primary-color: #6c8bff;
+            --primary-hover: #5070e0;
+            --secondary-color: #9ca3af;
+            --bg-color: #121826;
+            --card-bg: #1e293b;
+            --card-bg-hover: #2d3748;
+            --dark-color: #e2e8f0;
+            --radius-lg: 1.25rem;
+            --font-main: 'Quicksand', 'Segoe UI', sans-serif;
+            --font-heading: 'Poppins', sans-serif;
+        }
 
-{% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-<div class="text-center">
-    <h1 class="title">Edu Quest</h1>
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--dark-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
 
-    <div class="d-flex flex-column align-items-center">
-        <a href="{{ url_for('auth.login', user_type='student') }}" class="btn btn-primary mb-3">I am a Student</a>
-        <a href="{{ url_for('auth.login', user_type='teacher') }}" class="btn btn-secondary mb-3">I am a Teacher</a>
-        <a href="{{ url_for('auth.login', user_type='admin') }}" class="btn btn-secondary">I am an Admin</a>
+        .main-container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .eduquest-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2;
+        }
+
+        /* Lowest layer - background particles */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Second layer - hover area that triggers the icon display */
+        .hover-area {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 2;
+            cursor: pointer;
+        }
+
+        /* Third layer - icons that appear */
+        .icon-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 3;
+            pointer-events: none; /* Important! This makes the container transparent to clicks */
+        }
+
+        .role-icon {
+            position: absolute;
+            background-color: var(--card-bg);
+            border-radius: 50%;
+            width: 90px;
+            height: 90px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            opacity: 0;
+            transform: scale(0.5);
+            pointer-events: none; /* Initially disable pointer events on icons */
+            cursor: pointer;
+        }
+
+        .role-icon i {
+            font-size: 32px;
+            color: var(--dark-color);
+        }
+
+        .role-icon.activated {
+            pointer-events: auto; /* Enable pointer events once icons are in place */
+        }
+
+        .role-icon.activated:hover {
+            background-color: var(--card-bg-hover);
+        }
+
+
+        .student-icon {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+
+        .teacher-icon {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+
+        .admin-icon {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.5);
+        }
+
+        /* Fourth and top layer - title that will be changed */
+        .title-container {
+            position: relative;
+            z-index: 4;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none; /* Make title container transparent to clicks */
+        }
+
+        .title {
+            font-family: var(--font-heading);
+            font-size: 3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            position: relative;
+            transition: all 0.3s ease;
+            margin: 0;
+            text-align: center;
+        }
+
+        .title.active {
+            transform: scale(1.1);
+            text-shadow: 0 0 15px rgba(108, 139, 255, 0.7);
+        }
+
+        /* Icon positioning when hover area is active */
+        .hover-area.active ~ .icon-container .student-icon {
+            opacity: 1;
+            transform: translate(-50%, calc(-50% - 160px)) scale(1);
+        }
+
+        .hover-area.active ~ .icon-container .teacher-icon {
+            opacity: 1;
+            transform: translate(calc(-45% + 140px), calc(-20% + 100px)) scale(1);
+        }
+
+        .hover-area.active ~ .icon-container .admin-icon {
+            opacity: 1;
+            transform: translate(calc(-45% - 140px), calc(-20% + 100px)) scale(1);
+        }/* Add specific hover classes that ADD to the transform rather than replace it */
+        .hover-area.active ~ .icon-container .student-icon.activated:hover {
+            background: #3a56d4;
+        }
+
+        .hover-area.active ~ .icon-container .teacher-icon.activated:hover {
+            background: #3a56d4;
+        }
+
+        .hover-area.active ~ .icon-container .admin-icon.activated:hover {
+            background: #3a56d4;
+        }
+
+        .particle {
+            position: absolute;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            opacity: 0.3;/* Ensure particles don't interfere with clicks */
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .role-icon {
+                width: 70px;
+                height: 70px;
+            }
+
+            .role-icon i {
+                font-size: 24px;
+            }
+
+            .hover-area.active ~ .icon-container .student-icon {
+                transform: translate(-50%, calc(-50% - 130px)) scale(1);
+            }
+
+            .hover-area.active ~ .icon-container .teacher-icon {
+                transform: translate(calc(-50% + 110px), calc(-50% + 90px)) scale(1);
+            }
+
+            .hover-area.active ~ .icon-container .admin-icon {
+                transform: translate(calc(-50% - 110px), calc(-50% + 90px)) scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="eduquest-container">
+            <div class="hover-area" id="hoverArea"></div>
+            <div class="icon-container">
+                <div class="role-icon student-icon" id="studentIcon" data-role="Student">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div class="role-icon teacher-icon" id="teacherIcon" data-role="Teacher">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div class="role-icon admin-icon" id="adminIcon" data-role="Admin">
+                    <i class="fas fa-user-shield"></i>
+                </div>
+            </div>
+            <div class="title-container">
+                <h1 class="title" id="mainTitle">Edu Quest</h1>
+            </div>
+        </div>
+
+        <div class="particles" id="particles"></div>
     </div>
-</div>
-{% endblock %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const particlesContainer = document.getElementById('particles');
+            const numberOfParticles = 50;
+            const mainTitle = document.getElementById('mainTitle');
+            const hoverArea = document.getElementById('hoverArea');
+            const roleIcons = document.querySelectorAll('.role-icon');
+            const originalTitle = mainTitle.textContent;
+            let currentHoveredIcon = null;
+            let isHoverAreaActive = false;
+            let iconsActivated = false;
+
+            // Create particles
+            for (let i = 0; i < numberOfParticles; i++) {
+                createParticle(particlesContainer);
+            }
+
+            // Toggle hover state for the main area
+            hoverArea.addEventListener('mouseenter', function() {
+                this.classList.add('active');
+                mainTitle.classList.add('active');
+                isHoverAreaActive = true;
+
+                // Activate icons with a slight delay to prevent immediate hover
+                setTimeout(() => {
+                    if (isHoverAreaActive) {
+                        roleIcons.forEach(icon => {
+                            icon.classList.add('activated');
+                        });
+                        iconsActivated = true;
+                    }
+                }, 700); // Delay to allow icons to finish animation
+            });
+
+            hoverArea.addEventListener('mouseleave', function(e) {
+                // Check if we're not hovering over an icon
+                let relatedTarget = e.relatedTarget;
+                let hoveredToIcon = false;
+
+                while (relatedTarget) {
+                    if (relatedTarget.classList && relatedTarget.classList.contains('role-icon')) {
+                        hoveredToIcon = true;
+                        break;
+                    }
+                    relatedTarget = relatedTarget.parentElement;
+                }
+
+                if (!hoveredToIcon) {
+                    deactivateEverything();
+                }
+            });
+
+            // Handle icon hover and click
+            roleIcons.forEach(icon => {
+                icon.addEventListener('mouseenter', function(e) {
+                    // Only respond to hover if icons are activated
+                    if (!iconsActivated) return;
+
+                    currentHoveredIcon = this;
+                    const role = this.getAttribute('data-role');
+
+                    // Text change animation
+                    mainTitle.style.transform = 'scale(0.8)';
+                    mainTitle.style.opacity = '0';
+
+                    setTimeout(() => {
+                        mainTitle.textContent = (role === 'Admin' ? 'An ' : 'A ') + role + '?';
+                        mainTitle.style.transform = 'scale(1.1)';
+                        mainTitle.style.opacity = '1';
+                    }, 200);
+                });
+
+                icon.addEventListener('mouseleave', function(e) {
+                    // Only respond to hover if icons are activated
+                    if (!iconsActivated) return;
+
+                    // Check if we're not hovering back to the hover area
+                    let relatedTarget = e.relatedTarget;
+                    let hoveredBackToArea = false;
+
+                    while (relatedTarget) {
+                        if (relatedTarget.id === 'hoverArea' ||
+                            (relatedTarget.classList && relatedTarget.classList.contains('eduquest-container'))) {
+                            hoveredBackToArea = true;
+                            break;
+                        }
+                        relatedTarget = relatedTarget.parentElement;
+                    }
+
+                    currentHoveredIcon = null;
+
+                    // Text change animation back
+                    mainTitle.style.transform = 'scale(0.8)';
+                    mainTitle.style.opacity = '0';
+
+                    setTimeout(() => {
+                        mainTitle.textContent = originalTitle;
+                        mainTitle.style.transform = 'scale(1)';
+                        mainTitle.style.opacity = '1';
+                    }, 200);
+
+                    // If not hovering back to the main area, deactivate everything
+                    if (!hoveredBackToArea) {
+                        deactivateEverything();
+                    }
+                });
+
+                icon.addEventListener('click', function() {
+                    if (!iconsActivated) return;
+                    const role = this.getAttribute('data-role').toLowerCase();
+                    window.location.href = `/login?user_type=${role}`;
+                });
+            });
+
+            function deactivateEverything() {
+                hoverArea.classList.remove('active');
+                mainTitle.classList.remove('active');
+                mainTitle.textContent = originalTitle;
+                isHoverAreaActive = false;
+
+                roleIcons.forEach(icon => {
+                    icon.classList.remove('activated');
+                });
+                iconsActivated = false;
+            }
+        });
+
+        function createParticle(container) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+
+            // Random position
+            const posX = Math.random() * 100;
+            const posY = Math.random() * 100;
+
+            // Random size
+            const size = Math.random() * 5 + 2;
+
+            // Random animation duration
+            const duration = Math.random() * 20 + 10;
+
+            particle.style.left = `${posX}%`;
+            particle.style.top = `${posY}%`;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+
+            // Add animation
+            particle.style.animation = `float ${duration}s infinite ease-in-out`;
+
+            // Add keyframe animation dynamically
+            const keyframes = `
+                @keyframes float {
+                    0% {
+                        transform: translate(0, 0);
+                    }
+                    50% {
+                        transform: translate(${Math.random() * 50 - 25}px, ${Math.random() * 50 - 25}px);
+                    }
+                    100% {
+                        transform: translate(0, 0);
+                    }
+                }
+            `;
+
+            const styleSheet = document.createElement('style');
+            styleSheet.textContent = keyframes;
+            document.head.appendChild(styleSheet);
+
+            container.appendChild(particle);
+        }
+    </script>
+</body>
+</html>

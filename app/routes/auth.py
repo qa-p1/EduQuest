@@ -14,6 +14,9 @@ def login():
 
     user_type = request.args.get('user_type') or request.form.get('user_type')
 
+    if not user_type:
+        return redirect(url_for('auth.login', user_type='student'))
+
     if request.method == 'POST':
         email = request.form.get('email')
         password = request.form.get('password')
@@ -39,6 +42,7 @@ def login():
                 return redirect(url_for('common.dashboard'))
 
             flash("Invalid credentials. Please try again.", 'danger')
+            return redirect(url_for('auth.login', user_type=user_type))
 
         except Exception as e:
             flash(f"Authentication error: {str(e)}", 'danger')

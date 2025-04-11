@@ -14,11 +14,6 @@ def dashboard():
     return render_template('student/dashboard.html')
 
 
-@student_bp.route('/quiz')
-@login_required(user_types=['student'])
-def quiz():
-    return render_template('student/quiz.html', subjects=session['subjects'])
-
 
 @student_bp.route('/exams')
 @login_required(user_types=['student'])
