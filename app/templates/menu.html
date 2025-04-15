@@ -31,12 +31,20 @@
         </div>
         <ul class="nav-links">
             {% block menu_items %}
-                <!-- Dynamic menu items -->
-                {% for item in menu_items %}
-                    {% set current_url = request.path %}
-                    {% set item_url = url_for(session.get('user_type', '')+'.'+item.route) %}
+                <!-- Always show Dashboard first -->
+                {% set dashboard_route = url_for(session.get('user_type', '') + '.dashboard') %}
+                <li>
+                    <a href="{{ dashboard_route }}" {% if request.path == dashboard_route %}class="active"{% endif %}>
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+
+                <!-- Loop through other menu items, excluding 'dashboard' -->
+                {% for item in menu_items if item.route != 'dashboard' %}
+                    {% set item_url = url_for(session.get('user_type', '') + '.' + item.route) %}
                     <li>
-                        <a href="{{ item_url }}" {% if current_url == item_url %}class="active"{% endif %}>
+                        <a href="{{ item_url }}" {% if request.path == item_url %}class="active"{% endif %}>
                             <i class="{{ item.icon }}"></i>
                             <span>{{ item.name }}</span>
                         </a>

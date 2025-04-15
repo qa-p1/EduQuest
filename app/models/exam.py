@@ -16,7 +16,6 @@ def get_student_exams(student_id, student_class, student_section):
 
         if all_exams:
             for exam_id, exam in all_exams.items():
-                print(exam_id)
                 # Check if exam is for the student's class
                 if exam.get('class') == student_class:
                     # Check if exam creator teaches the student's section
@@ -26,10 +25,9 @@ def get_student_exams(student_id, student_class, student_section):
                     # Check if the teacher teaches this student's section
                     teaches_section = False
                     classes_taught = teacher_data.get('classes_teached', {})
-                    print(classes_taught, "hello")
+
                     # Check if teacher teaches this class and section
                     if str(student_class) in classes_taught:
-                        print(student_class)
                         sections = classes_taught[str(student_class)].get('sections', {})
                         if student_section in sections:
                             teaches_section = True

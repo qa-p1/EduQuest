@@ -19,7 +19,6 @@ def dashboard():
 @login_required(user_types=['student'])
 def exams():
     student_id = session.get('user_id')
-    print(student_id)
     student_ref = database.child('students').child(student_id.replace('.', ','))
     student_data = student_ref.get()
     student_class = student_data['class']

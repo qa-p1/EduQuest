@@ -1,26 +1,57 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Track loading status for each section
+    const loadingStatus = {
+        stats: false,
+        exams: false,
+        activity: false,
+        performance: false,
+        submissions: false
+    };
+
+    // Utility function to remove skeletons
+    const removeSkeletons = (parentId, skeletonClass) => {
+        const parent = document.getElementById(parentId);
+        if (parent) {
+            const skeletons = parent.querySelectorAll(skeletonClass || '[id*="Skeleton"]');
+            skeletons.forEach(skeleton => {
+                skeleton.style.display = 'none';
+            });
+        }
+    };
+
+    // 1. First load the basic statistics (fastest to load)
     fetch('/teacher/api/dashboard_stats')
         .then(response => response.json())
         .then(data => {
+            // Remove skeletons
+            document.getElementById('totalStudentsSkeleton').style.display = 'none';
+            document.getElementById('activeExamsSkeleton').style.display = 'none';
+            document.getElementById('totalQuestionsSkeleton').style.display = 'none';
+            document.getElementById('avgCompletionSkeleton').style.display = 'none';
+
+            // Update with real data
             document.getElementById('totalStudents').textContent = data.total_students;
             document.getElementById('activeExams').textContent = data.active_exams;
             document.getElementById('totalQuestions').textContent = data.total_questions;
             document.getElementById('avgCompletion').textContent = data.avg_completion + '%';
+
+            loadingStatus.stats = true;
         })
         .catch(error => console.error('Error fetching dashboard stats:', error));
 
+    // 2. Load exams table
     fetch('/teacher/api/exams_and_students')
         .then(response => response.json())
         .then(data => {
             const activeExamsTable = document.getElementById('activeExamsTable');
-            activeExamsTable.innerHTML = '';
 
-            // Sort exams by date - newest first
+            // Remove skeleton rows
+            removeSkeletons('activeExamsTable');
+
             const sortedExams = data.exams.sort((a, b) => {
                 return new Date(b.exam_date) - new Date(a.exam_date);
             });
 
-            // Display exams (up to 3 or 5, you can adjust)
             const examsToShow = sortedExams.filter(exam => exam.exam_status).slice(0, 3);
 
             if (examsToShow.length === 0) {
@@ -30,15 +61,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 </tr>`;
             } else {
                 examsToShow.forEach(exam => {
-                    // Count submissions
                     const submissions = exam.submissions || {};
                     const submissionCount = Object.keys(submissions).filter(key => key !== ' ').length;
-
-                    // Calculate completion percentage
                     let completionPercentage = 0;
                     let className = `Class ${exam.class}`;
 
-                    // Format date for display
                     const examDate = new Date(exam.exam_date);
                     const formattedDate = examDate.toLocaleDateString('en-US', {
                         day: '2-digit',
@@ -82,14 +109,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     </tr>`;
                 });
             }
+
+            loadingStatus.exams = true;
         })
         .catch(error => console.error('Error fetching exams:', error));
 
+    // 3. Load recent activity
     fetch('/teacher/api/recent_activity')
         .then(response => response.json())
         .then(data => {
             const activityFeed = document.getElementById('activityFeed');
-            activityFeed.innerHTML = '';
+
+            // Remove skeleton activities
+            removeSkeletons('activityFeed', '.skeleton-activity');
 
             if (data.activities.length === 0) {
                 activityFeed.innerHTML = `
@@ -116,18 +148,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>`;
                 });
             }
+
+            loadingStatus.activity = true;
         })
         .catch(error => console.error('Error fetching activity:', error));
 
+    // 4. Load class performance
     fetch('/teacher/api/class_performance')
         .then(response => response.json())
         .then(data => {
             const performanceContainer = document.querySelector('.class-perfo');
-            performanceContainer.innerHTML = '';
+
+            // Remove skeleton performance data
+            removeSkeletons('', '.skeleton-performance');
 
             if (data.class_performance.length === 0) {
                 performanceContainer.innerHTML = `<p class="text-muted">No class performance data available</p>`;
             } else {
+                // Clear the container before adding new items
+                performanceContainer.innerHTML = '';
+
                 data.class_performance.forEach(classData => {
                     performanceContainer.innerHTML += `
                     <div class="mb-4">
@@ -145,14 +185,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>`;
                 });
             }
+
+            loadingStatus.performance = true;
         })
         .catch(error => console.error('Error fetching class performance:', error));
 
+    // 5. Load pending submissions
     fetch('/teacher/api/pending_submissions')
         .then(response => response.json())
         .then(data => {
             const pendingSubmissions = document.getElementById('pendingSubmissions');
-            pendingSubmissions.innerHTML = '';
+
+            // Remove skeleton submissions
+            removeSkeletons('pendingSubmissions');
 
             if (!data.exam_submissions || Object.keys(data.exam_submissions).length === 0) {
                 pendingSubmissions.innerHTML = `

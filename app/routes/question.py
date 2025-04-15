@@ -101,11 +101,7 @@ def add_question():
         except Exception as e:
             flash(f"Error adding question: {e}", 'danger')
 
-    return render_template('add_question.html', subjects=subjects,
-                           teacher_questions=teacher_questions,
-                           admin_questions=admin_questions,
-                           current_page=current_page,
-                           total_pages=total_pages)
+    return render_template('add_question.html', subjects=subjects, admin_questions=admin_questions, current_page=current_page, total_pages=total_pages)
 
 
 @question_bp.route('/get_question_metadata/<question_id>')
@@ -249,4 +245,4 @@ def delete_question(question_id):
     except Exception as e:
         flash(f"Error: {e}", 'danger')
 
-    return redirect(url_for('question.add_question'))
+    return redirect(url_for('teacher.add_questions_via'))

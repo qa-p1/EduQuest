@@ -247,7 +247,7 @@ def process_mcq_data(form_data, existing_data=None):
     question_data = {
         "text": question_text,
         "options": options_data,
-        "correct_answer": correct_answer,
+        "correct_answer": int(correct_answer) - 1,
     }
 
     return question_data, None

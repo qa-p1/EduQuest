@@ -416,7 +416,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         </div>
                         <div>
                             <p><strong>Can't find your question?</strong></p>
-                            <a href="/teacher/add_question" class="btn btn-primary btn-sm">
+                            <a href="/add_question" class="btn btn-primary btn-sm">
                                 <i class="fas fa-plus-circle"></i> Add a New Question
                             </a>
                         </div>
