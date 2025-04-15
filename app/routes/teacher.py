@@ -1,7 +1,9 @@
 from app.models.question import add_question as model_add_question
 from datetime import datetime
 from flask import Blueprint, render_template, session, request, flash, jsonify
-import pandas as pd
+import csv
+import openpyxl
+import re
 from app.models.question import get_teacher_questions
 from app.utils.auth import login_required
 from app.utils.database import database
@@ -565,49 +567,33 @@ def upload_spreadsheet():
         return jsonify({'success': False, 'message': 'No file selected'}), 400
 
     try:
+        questions = []
+
         if file.filename.endswith('.csv'):
-            df = pd.read_csv(file)
+            # Process CSV with csv module
+            csv_data = file.read().decode('utf-8').splitlines()
+            reader = csv.DictReader(csv_data)
+
+            for row in reader:
+                question = process_question_row(row)
+                questions.append(question)
+
         elif file.filename.endswith('.xlsx') or file.filename.endswith('.xls'):
-            df = pd.read_excel(file)
+            # Process Excel with openpyxl
+            wb = openpyxl.load_workbook(file)
+            ws = wb.active
+
+            # Get header row
+            headers = [cell.value for cell in ws[1]]
+
+            # Process each row after the header
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                row_dict = {headers[i]: row[i] for i in range(len(headers))}
+                question = process_question_row(row_dict)
+                questions.append(question)
+
         else:
             return jsonify({'success': False, 'message': 'Unsupported file format'}), 400
-
-        questions = []
-        for _, row in df.iterrows():
-            question = {
-                'question_type': row['Question Type'],
-                'text': row['Question Text'],
-                'difficulty': row['Difficulty'],
-                'marks': int(row['Marks']),
-                'created_by': session['user_id'],
-                'created_by_type': 'teacher',
-                'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'class': int(request.form.get('class', 0)),
-                'subject_id': request.form.get('subject_id', '')
-            }
-
-            if row['Question Type'] == 'mcq':
-                options = []
-                for opt in ['Option A', 'Option B', 'Option C', 'Option D']:
-                    if pd.notna(row[opt]):
-                        options.append(row[opt])
-
-                question['options'] = options
-                question['correct_answer'] = row['Correct Answer']
-
-            elif row['Question Type'] == 'true_false':
-                question['options'] = ['True', 'False']
-                question['correct_answer'] = row['Correct Answer']
-
-            elif row['Question Type'] == 'fill_in_blanks':
-                # Extract blanks from question text
-                blanks = []
-                import re
-                for match in re.finditer(r'\[blank\]', row['Question Text']):
-                    blanks.append(row['Correct Answer'])
-                question['blanks'] = blanks
-
-            questions.append(question)
 
         return jsonify({
             'success': True,
@@ -618,6 +604,44 @@ def upload_spreadsheet():
     except Exception as e:
         return jsonify({'success': False, 'message': f'Error processing file: {str(e)}'}), 500
 
+
+def process_question_row(row):
+    """Helper function to process each question row"""
+
+
+    question = {
+        'question_type': row['Question Type'],
+        'text': row['Question Text'],
+        'difficulty': row['Difficulty'],
+        'marks': int(row['Marks']),
+        'created_by': session['user_id'],
+        'created_by_type': 'teacher',
+        'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'class': int(request.form.get('class', 0)),
+        'subject_id': request.form.get('subject_id', '')
+    }
+
+    if row['Question Type'] == 'mcq':
+        options = []
+        for opt in ['Option A', 'Option B', 'Option C', 'Option D']:
+            if opt in row and row[opt]:  # Check if option exists and is not empty
+                options.append(row[opt])
+
+        question['options'] = options
+        question['correct_answer'] = row['Correct Answer']
+
+    elif row['Question Type'] == 'true_false':
+        question['options'] = ['True', 'False']
+        question['correct_answer'] = row['Correct Answer']
+
+    elif row['Question Type'] == 'fill_in_blanks':
+        # Extract blanks from question text
+        blanks = []
+        for match in re.finditer(r'\[blank\]', row['Question Text']):
+            blanks.append(row['Correct Answer'])
+        question['blanks'] = blanks
+
+    return question
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
