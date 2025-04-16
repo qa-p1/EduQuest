@@ -659,7 +659,7 @@ else:
 # --- Helper Function for AI Prompt ---
 def create_ai_prompt(class_name, subject_name, count, type_preference='mcq', source_type='PDF content'):
     """Creates a standardized prompt for Gemini question generation."""
-    # (Keep the implementation of create_ai_prompt exactly as it was in the previous correct version)
+        # (Keep the implementation of create_ai_prompt exactly as it was in the previous correct version)
     type_instruction = ""
     if type_preference == 'mcq':
         type_instruction = "Generate Multiple Choice Questions (MCQ)."

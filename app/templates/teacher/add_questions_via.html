@@ -161,9 +161,6 @@
           <li class="nav-item">
             <a class="nav-link" data-bs-toggle="tab" href="#paste-text">Paste from Text</a>
           </li>
-          <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#google-form">Import Google Form</a>
-          </li>
         </ul>
 
         <div class="tab-content p-3 border border-top-0 rounded-bottom">
@@ -225,27 +222,6 @@ d) Saturn</pre>
               <i class="fas fa-check me-2"></i>Parse Questions
             </button>
           </div>
-
-          <div class="tab-pane fade" id="google-form">
-            <div class="text-center mb-4">
-              <i class="fas fa-clipboard-list fa-4x mb-3 text-success"></i>
-              <h4>Import from Google Forms</h4>
-              <p class="text-white">Connect your Google account to import questions from your Forms</p>
-            </div>
-
-            <div class="form-group mb-3">
-              <label for="googleFormUrl" class="form-label">Google Form URL</label>
-              <input type="url" class="form-control" id="googleFormUrl" placeholder="https://docs.google.com/forms/d/...">
-            </div>
-
-            <button class="btn btn-success w-100" id="connectGoogleBtn">
-              <i class="fab fa-google me-2"></i>Connect with Google
-            </button>
-
-            <div class="mt-4 text-center">
-              <p class="text-white">Or export your Google Form as a CSV file and use the spreadsheet import option</p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -258,7 +234,7 @@ d) Saturn</pre>
             <a class="nav-link" data-bs-toggle="tab" href="#generate-prompt">Generate with Prompt</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" data-bs-toggle="tab" href="#youtube">YouTube</a>
+            <a class="nav-link" data-bs-toggle="tab" href="#website">Website</a>
           </li>
         </ul>
 
@@ -357,21 +333,24 @@ d) Saturn</pre>
           </div>
 
           <!-- YouTube Tab -->
-          <div class="tab-pane fade" id="youtube">
+          <div class="tab-pane fade" id="website">
             <div class="text-center mb-4">
-              <i class="fab fa-youtube fa-4x mb-3 text-danger"></i>
-              <h4>Generate Questions from YouTube</h4>
-              <p>Generate questions based on educational YouTube videos</p>
+              <i class="fa-solid fa-globe py-4" style="font-size: 60px"></i>
+              <h4>Generate Questions from A Website</h4>
+              <p>Generate questions based on educational Website videos</p>
             </div>
 
-            <div class="form-group mb-3">
-              <label for="youtubeUrl" class="form-label">YouTube Video URL</label>
-              <div class="input-group">
-                <input type="url" class="form-control" id="youtubeUrl" placeholder="https://www.youtube.com/watch?v=...">
-                <button class="btn btn-outline-secondary" type="button" id="fetchVideoInfo">
-                  <i class="fas fa-search"></i>
-                </button>
-              </div>
+            <div class="mb-3 import-container">
+                <label for="websiteUrl" class="form-label"><i class="fas fa-globe me-1"></i> Generate from Website URL</label>
+                <div class="input-group">
+                    <input type="url" class="form-control" id="websiteUrl" placeholder="https://example.com/article">
+                    <button class="btn btn-primary" type="button" id="generateFromWebsiteBtn">
+                        <i class="fas fa-cogs me-1"></i> Generate Questions
+                    </button>
+                </div>
+                <small class="form-text text-muted">Enter the full URL of the webpage containing the content.</small>
+                <!-- Optional: Add inputs for count/type specifically for URL if needed, or reuse general ones -->
+                <!-- Reuse #questionCountAI and #questionTypeAI for simplicity if desired -->
             </div>
 
             <div class="video-preview mb-4 d-none" id="videoPreview">

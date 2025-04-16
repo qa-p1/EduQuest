@@ -182,7 +182,7 @@ $(document).ready(function() { // Use jQuery's ready function
         }
     }
 
-     /**
+    /**
      * Updates the progress bar associated with a specific import container.
      * @param {jQuery} $container - The jQuery object for the import container.
      * @param {number} percentage - The progress percentage (0-100).
@@ -241,7 +241,7 @@ $(document).ready(function() { // Use jQuery's ready function
         return correctAnswer; // Return original for other types or if normalization isn't needed
     }
 
-     /**
+    /**
      * Validates and prepares questions for saving to the backend.
      * Performs normalization and checks for required fields.
      * @param {Array<Object>} questions - Array of question objects from the preview.
@@ -250,7 +250,11 @@ $(document).ready(function() { // Use jQuery's ready function
     function validateAndPrepareQuestionsForSave(questions) {
 
         if (!questions || questions.length === 0) {
-            return { valid: false, questionsToSave: null, errors: ["No questions found in the preview to save."] };
+            return {
+                valid: false,
+                questionsToSave: null,
+                errors: ["No questions found in the preview to save."]
+            };
         }
 
         let questionsToSave = JSON.parse(JSON.stringify(questions)); // Deep clone
@@ -259,19 +263,17 @@ $(document).ready(function() { // Use jQuery's ready function
         questionsToSave.forEach((q, index) => {
             // 1. Normalize Correct Answer (MCQ/TF)
             if (q.question_type === 'mcq' || q.question_type === 'true_false') {
-                 const normalizedAnswer = normalizeCorrectAnswer(q); // Use the helper
-                 // Check if normalization produced a valid result (not just the default)
-                 if (normalizedAnswer === null || normalizedAnswer === undefined ||
+                const normalizedAnswer = normalizeCorrectAnswer(q); // Use the helper
+                // Check if normalization produced a valid result (not just the default)
+                if (normalizedAnswer === null || normalizedAnswer === undefined ||
                     (q.question_type === 'mcq' && (normalizedAnswer < 0 || normalizedAnswer > 3)) ||
-                    (q.question_type === 'true_false' && !['0', '1'].includes(normalizedAnswer)))
-                 {
+                    (q.question_type === 'true_false' && !['0', '1'].includes(normalizedAnswer))) {
                     // Check if original value was already invalid before defaulting
-                    if (q.correct_answer !== 0 && q.correct_answer !== '0'){ // avoid flagging if default was applied correctly
-                       errors.push(`Question ${index + 1} (${q.text.substring(0,20)}...): Invalid or missing correct answer.`);
+                    if (q.correct_answer !== 0 && q.correct_answer !== '0') { // avoid flagging if default was applied correctly
+                        errors.push(`Question ${index + 1} (${q.text.substring(0,20)}...): Invalid or missing correct answer.`);
                     }
-
-                 }
-                 q.correct_answer = normalizedAnswer; // Assign normalized/default value
+                }
+                q.correct_answer = normalizedAnswer; // Assign normalized/default value
             }
 
             // 2. Ensure Marks is a valid number (default to 1)
@@ -282,14 +284,14 @@ $(document).ready(function() { // Use jQuery's ready function
             }
             console.log(q)
             // 3. Ensure Class and Subject are present (should be added during import/generation)
-             if (!q.class || isNaN(parseInt(q.class))) { // Check if class exists and is numeric-like
+            if (!q.class || isNaN(parseInt(q.class))) { // Check if class exists and is numeric-like
                 errors.push(`Question ${index + 1} (${q.text.substring(0,20)}...): Class is missing or invalid.`);
-             } else {
-                 q.class = parseInt(q.class); // Ensure it's stored as a number
-             }
-             if (!q.subject_id) { // Check if subject_id exists and is numeric
-                 errors.push(`Question ${index + 1} (${q.text.substring(0,20)}...): Subject ID is missing or invalid.`);
-             }
+            } else {
+                q.class = parseInt(q.class); // Ensure it's stored as a number
+            }
+            if (!q.subject_id) { // Check if subject_id exists and is numeric
+                errors.push(`Question ${index + 1} (${q.text.substring(0,20)}...): Subject ID is missing or invalid.`);
+            }
 
 
             // 4. Basic Text Check
@@ -297,17 +299,17 @@ $(document).ready(function() { // Use jQuery's ready function
                 errors.push(`Question ${index + 1}: Question text is missing or empty.`);
             }
 
-             // 5. Type Specific Validations (Basic Examples)
-             if (q.question_type === 'mcq') {
-                 if (!Array.isArray(q.options) || q.options.length < 2 || q.options.length > 4) { // Assuming 2-4 options typical
-                     errors.push(`Question ${index + 1} (MCQ): Invalid or insufficient options.`);
-                 }
-             } else if (q.question_type === 'fill_in_blanks') {
-                 if (!Array.isArray(q.blanks) || q.blanks.length === 0) {
-                     errors.push(`Question ${index + 1} (Fill Blanks): Missing answers for blanks.`);
-                 }
-             }
-             // TODO: Add more specific validations for other types if needed (e.g., match_columns lengths)
+            // 5. Type Specific Validations (Basic Examples)
+            if (q.question_type === 'mcq') {
+                if (!Array.isArray(q.options) || q.options.length < 2 || q.options.length > 4) { // Assuming 2-4 options typical
+                    errors.push(`Question ${index + 1} (MCQ): Invalid or insufficient options.`);
+                }
+            } else if (q.question_type === 'fill_in_blanks') {
+                if (!Array.isArray(q.blanks) || q.blanks.length === 0) {
+                    errors.push(`Question ${index + 1} (Fill Blanks): Missing answers for blanks.`);
+                }
+            }
+            // TODO: Add more specific validations for other types if needed (e.g., match_columns lengths)
 
 
             // Remove any temporary frontend-only properties
@@ -330,15 +332,15 @@ $(document).ready(function() { // Use jQuery's ready function
         const proceed = confirmDiscardUnsavedChanges(() => {
             // This runs only if user confirms or no changes exist
             // Hide sections first, then show the selected one
-             $importSection.addClass('d-none');
-             $aiSection.addClass('d-none');
+            $importSection.addClass('d-none');
+            $aiSection.addClass('d-none');
 
-             const option = $button.data('option');
-             if (option === 'import-worksheets') {
-                 $importSection.removeClass('d-none');
-             } else if (option === 'generate-ai') {
-                 $aiSection.removeClass('d-none');
-             }
+            const option = $button.data('option');
+            if (option === 'import-worksheets') {
+                $importSection.removeClass('d-none');
+            } else if (option === 'generate-ai') {
+                $aiSection.removeClass('d-none');
+            }
             // Update active state
             $optionButtons.removeClass('active');
             $button.addClass('active');
@@ -372,31 +374,33 @@ $(document).ready(function() { // Use jQuery's ready function
 
         // Check for unsaved changes *before* making the AJAX call
         const proceed = confirmDiscardUnsavedChanges(() => {
-             // Action on confirmation or no unsaved changes: Load subjects
-             $subjectDropdown.prop('disabled', true).html('<option value="" selected disabled>Loading subjects...</option>');
+            // Action on confirmation or no unsaved changes: Load subjects
+            $subjectDropdown.prop('disabled', true).html('<option value="" selected disabled>Loading subjects...</option>');
 
-             $.ajax({
-                 url: '/teacher/api/subjects_by_class', // Ensure this route exists
-                 method: 'GET',
-                 data: { class: classId },
-                 dataType: 'json',
-                 success: function(response) {
-                     let options = '<option value="" selected disabled>Select a subject</option>';
-                     if (response.subjects && response.subjects.length > 0) {
-                         response.subjects.forEach(subject => {
-                             options += `<option value="${subject.id}">${subject.name}</option>`;
-                         });
-                         $subjectDropdown.html(options).prop('disabled', false);
-                     } else {
-                         $subjectDropdown.html('<option value="" selected disabled>No subjects found</option>').prop('disabled', true); // Keep disabled if no subjects
-                     }
-                 },
-                 error: function(xhr) {
-                     console.error("Error loading subjects:", xhr);
-                     $subjectDropdown.html('<option value="" selected disabled>Error loading</option>').prop('disabled', true);
-                     alert('Error loading subjects. Please try again.');
-                 }
-             });
+            $.ajax({
+                url: '/teacher/api/subjects_by_class', // Ensure this route exists
+                method: 'GET',
+                data: {
+                    class: classId
+                },
+                dataType: 'json',
+                success: function(response) {
+                    let options = '<option value="" selected disabled>Select a subject</option>';
+                    if (response.subjects && response.subjects.length > 0) {
+                        response.subjects.forEach(subject => {
+                            options += `<option value="${subject.id}">${subject.name}</option>`;
+                        });
+                        $subjectDropdown.html(options).prop('disabled', false);
+                    } else {
+                        $subjectDropdown.html('<option value="" selected disabled>No subjects found</option>').prop('disabled', true); // Keep disabled if no subjects
+                    }
+                },
+                error: function(xhr) {
+                    console.error("Error loading subjects:", xhr);
+                    $subjectDropdown.html('<option value="" selected disabled>Error loading</option>').prop('disabled', true);
+                    alert('Error loading subjects. Please try again.');
+                }
+            });
         });
 
         if (!proceed) {
@@ -425,7 +429,7 @@ $(document).ready(function() { // Use jQuery's ready function
             $(this).val(previousValue || '');
         } else {
             // User confirmed or no changes: Update stored value
-             $(this).data('prevValue', subjectId);
+            $(this).data('prevValue', subjectId);
         }
     });
 
@@ -487,14 +491,14 @@ $(document).ready(function() { // Use jQuery's ready function
                 xhr.upload.addEventListener('progress', function(evt) {
                     if (evt.lengthComputable) {
                         const percentComplete = Math.round((evt.loaded / evt.total) * 100);
-                         updateUploadProgress($importContainer, percentComplete, true);
+                        updateUploadProgress($importContainer, percentComplete, true);
                     }
                 }, false);
                 return xhr;
             },
             success: function(response) {
-                 updateUploadProgress($importContainer, 100, true); // Mark as 100%
-                 setTimeout(() => updateUploadProgress($importContainer, 0, false), 1000); // Hide after a second
+                updateUploadProgress($importContainer, 100, true); // Mark as 100%
+                setTimeout(() => updateUploadProgress($importContainer, 0, false), 1000); // Hide after a second
 
                 if (response.success && response.questions && response.questions.length > 0) {
                     // Add class and subject_id to each question object before displaying
@@ -505,16 +509,15 @@ $(document).ready(function() { // Use jQuery's ready function
                     }));
                     displayQuestions(questionsWithMetadata, response.message || `Processed ${file.name}`);
                 } else if (response.success && (!response.questions || response.questions.length === 0)) {
-                     alert(response.message || 'Spreadsheet processed, but no valid questions were found.');
-                     clearPreviewArea();
-                }
-                 else {
+                    alert(response.message || 'Spreadsheet processed, but no valid questions were found.');
+                    clearPreviewArea();
+                } else {
                     alert('Error processing file: ' + (response.message || 'Unknown error'));
                     clearPreviewArea();
                 }
             },
             error: function(xhr) {
-                 updateUploadProgress($importContainer, 0, false); // Hide progress on error
+                updateUploadProgress($importContainer, 0, false); // Hide progress on error
                 clearPreviewArea(); // Clear preview on error
                 try {
                     const response = JSON.parse(xhr.responseText);
@@ -530,222 +533,227 @@ $(document).ready(function() { // Use jQuery's ready function
     // --- Other Import/Generate Handlers (Placeholders) ---
 
     $('#parseTextQuestions').on('click', function() {
-    // No need for confirmDiscardUnsavedChanges here, parsing is quick and happens before display
-    const pastedText = $pastedTextArea.val()?.trim();
-    const selectedClass = $classDropdown.val();
-    const selectedSubject = $subjectDropdown.val();
-
-    if (!selectedClass || !selectedSubject) {
-        alert('Please select Class and Subject first.');
-        return;
-    }
-    if (!pastedText) {
-        alert('Please paste some questions first.');
-        return;
-    }
-
-
-    try {
-        // Use the new parsing function directly on the frontend
-        const parsedQuestions = parsePastedText(pastedText, selectedClass, selectedSubject);
-
-        if (parsedQuestions.length > 0) {
-            // Now display these parsed questions
-             displayQuestions(parsedQuestions, `Parsed ${parsedQuestions.length} question(s) from text`);
-             // $pastedTextArea.val(''); // Optionally clear textarea after parsing
-        } else {
-             alert('Could not parse any valid questions from the provided text. Please check the format.');
-             clearPreviewArea(); // Clear preview if nothing was parsed
-        }
-    } catch (error) {
-        console.error("Error parsing pasted text:", error);
-        alert('An error occurred while parsing the text. Please check the console for details.');
-        clearPreviewArea();
-    } finally {
-        hideLoadingModal();
-    }
-});
-    $pdfFileInput.on('change', function (){
-       $('.pdf-options').removeClass('d-none')
-       $('.selected-file-name').text($pdfFileInput[0]?.files?.[0].name)
-    })
-    $('#extractPdfQuestions').on('click', function() {
-    confirmDiscardUnsavedChanges(() => {
-        const pdfFile = $pdfFileInput[0]?.files?.[0];
-        const questionCount = $('#questionCount').val(); // Get desired count
+        // No need for confirmDiscardUnsavedChanges here, parsing is quick and happens before display
+        const pastedText = $pastedTextArea.val()?.trim();
         const selectedClass = $classDropdown.val();
         const selectedSubject = $subjectDropdown.val();
-        const questionTypePref = $('#questionTypePdf').val() || 'mcq';
-        console.log('clicked')
+
         if (!selectedClass || !selectedSubject) {
-            alert('Please select Class and Subject first.'); return;
+            alert('Please select Class and Subject first.');
+            return;
         }
-        if (!pdfFile) {
-            alert('Please select a PDF file first.'); return;
+        if (!pastedText) {
+            alert('Please paste some questions first.');
+            return;
         }
-        if (!questionCount || questionCount <= 0 || questionCount > 20) { // Match backend limit
-            alert('Please specify a valid number of questions (1-20).'); return;
+
+
+        try {
+            // Use the new parsing function directly on the frontend
+            const parsedQuestions = parsePastedText(pastedText, selectedClass, selectedSubject);
+
+            if (parsedQuestions.length > 0) {
+                // Now display these parsed questions
+                displayQuestions(parsedQuestions, `Parsed ${parsedQuestions.length} question(s) from text`);
+                // $pastedTextArea.val(''); // Optionally clear textarea after parsing
+            } else {
+                alert('Could not parse any valid questions from the provided text. Please check the format.');
+                clearPreviewArea(); // Clear preview if nothing was parsed
+            }
+        } catch (error) {
+            console.error("Error parsing pasted text:", error);
+            alert('An error occurred while parsing the text. Please check the console for details.');
+            clearPreviewArea();
+        } finally {
+            hideLoadingModal();
         }
-        showLoadingModal('Generating from PDF...', `Uploading ${pdfFile.name} and preparing for AI processing...`);
-        updateLoadingProgress(10);
+    });
+    $pdfFileInput.on('change', function() {
+        $('.pdf-options').removeClass('d-none')
+        $('.selected-file-name').text($pdfFileInput[0]?.files?.[0].name)
+    })
+    $('#extractPdfQuestions').on('click', function() {
+        confirmDiscardUnsavedChanges(() => {
+            const pdfFile = $pdfFileInput[0]?.files?.[0];
+            const questionCount = $('#questionCount').val(); // Get desired count
+            const selectedClass = $classDropdown.val();
+            const selectedSubject = $subjectDropdown.val();
+            const questionTypePref = $('#questionTypePdf').val() || 'mcq';
+            console.log('clicked')
+            if (!selectedClass || !selectedSubject) {
+                alert('Please select Class and Subject first.');
+                return;
+            }
+            if (!pdfFile) {
+                alert('Please select a PDF file first.');
+                return;
+            }
+            if (!questionCount || questionCount <= 0 || questionCount > 20) { // Match backend limit
+                alert('Please specify a valid number of questions (1-20).');
+                return;
+            }
+            showLoadingModal('Generating from PDF...', `Uploading ${pdfFile.name} and preparing for AI processing...`);
+            updateLoadingProgress(10);
 
-        let geminiUploadedObject = null;
+            let geminiUploadedObject = null;
 
-        const fileFormData = new FormData();
-        fileFormData.append('file', pdfFile);
+            const fileFormData = new FormData();
+            fileFormData.append('file', pdfFile);
 
-        // First AJAX call to upload the PDF
+            // First AJAX call to upload the PDF
+            $.ajax({
+                url: '/teacher/upload_pdf',
+                type: 'POST',
+                data: fileFormData,
+                processData: false,
+                contentType: false,
+                xhr: function() {
+                    const xhr = new window.XMLHttpRequest();
+                    xhr.upload.addEventListener('progress', function(evt) {
+                        if (evt.lengthComputable) {
+                            const percentComplete = Math.round((evt.loaded / evt.total) * 30);
+                            updateLoadingProgress(10 + percentComplete); // Progress from 10% to 40% during upload
+                        }
+                    }, false);
+                    return xhr;
+                },
+                success: function(response) {
+                    updateLoadingProgress(50);
+                    if (response.success && response.uploaded_file) {
+                        geminiUploadedObject = response.uploaded_file;
+                        console.log("PDF uploaded successfully:", geminiUploadedObject);
+
+                        // Now we proceed with the generation request
+                        updateLoadingProgress(60);
+
+                        generateQuestionsFromUploadedPdf(
+                            geminiUploadedObject,
+                            selectedClass,
+                            selectedSubject,
+                            questionCount,
+                            questionTypePref,
+                            pdfFile.name
+                        );
+                    } else {
+                        hideLoadingModal();
+                        alert('Error uploading PDF: ' + (response.message || 'Unknown error during upload.'));
+                    }
+                },
+                error: function(xhr) {
+                    hideLoadingModal();
+                    try {
+                        const response = JSON.parse(xhr.responseText);
+                        alert(`Upload Error (${xhr.status}): ${response.message || 'Server error during upload.'}`);
+                    } catch (e) {
+                        alert(`An unexpected error occurred while uploading the PDF. Status: ${xhr.status}`);
+                    }
+                }
+            });
+        });
+    });
+
+    // Separate function to handle the generation request
+    function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedSubject, questionCount, questionTypePref, fileName) {
+        const formData = new FormData();
+        formData.append('class', selectedClass);
+        formData.append('subject_id', selectedSubject);
+        formData.append('question_count', questionCount);
+        formData.append('question_type_pref', questionTypePref);
+        formData.append('gemini_uploaded_object', JSON.stringify(geminiObject));
+
         $.ajax({
-            url: '/teacher/upload_pdf',
+            url: '/teacher/generate_from_pdf',
             type: 'POST',
-            data: fileFormData,
+            data: formData,
             processData: false,
             contentType: false,
-            xhr: function() {
-                const xhr = new window.XMLHttpRequest();
-                xhr.upload.addEventListener('progress', function(evt) {
-                    if (evt.lengthComputable) {
-                        const percentComplete = Math.round((evt.loaded / evt.total) * 30);
-                        updateLoadingProgress(10 + percentComplete); // Progress from 10% to 40% during upload
-                    }
-                }, false);
-                return xhr;
-            },
             success: function(response) {
-                updateLoadingProgress(50);
-                if (response.success && response.uploaded_file) {
-                    geminiUploadedObject = response.uploaded_file;
-                    console.log("PDF uploaded successfully:", geminiUploadedObject);
+                updateLoadingProgress(90);
 
-                    // Now we proceed with the generation request
-                    updateLoadingProgress(60);
+                if (response.success && response.generated_text) {
+                    console.log("AI Generated Text:\n", response.generated_text);
+                    const parsedQuestions = parsePastedText(response.generated_text, selectedClass, selectedSubject);
+                    updateLoadingProgress(100);
 
-                    generateQuestionsFromUploadedPdf(
-                        geminiUploadedObject,
-                        selectedClass,
-                        selectedSubject,
-                        questionCount,
-                        questionTypePref,
-                        pdfFile.name
-                    );
-                } else {
+                    if (parsedQuestions.length > 0) {
+                        displayQuestions(parsedQuestions, `AI generated ${parsedQuestions.length} question(s) from ${fileName}`);
+                    } else {
+                        alert('AI generated a response, but no valid questions could be parsed from it. The format might be incorrect. Please check the console log for the raw AI response.');
+                        clearPreviewArea();
+                    }
                     hideLoadingModal();
-                    alert('Error uploading PDF: ' + (response.message || 'Unknown error during upload.'));
+                } else {
+                    alert('Error generating questions from PDF: ' + (response.message || 'Unknown error from server.'));
+                    clearPreviewArea();
+                    hideLoadingModal();
                 }
             },
             error: function(xhr) {
                 hideLoadingModal();
+                clearPreviewArea();
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    alert(`Upload Error (${xhr.status}): ${response.message || 'Server error during upload.'}`);
+                    alert(`Generation Error (${xhr.status}): ${response.message || 'Server error during generation.'}`);
                 } catch (e) {
-                    alert(`An unexpected error occurred while uploading the PDF. Status: ${xhr.status}`);
+                    alert(`An unexpected error occurred while generating questions. Status: ${xhr.status}`);
                 }
             }
         });
-    });
-});
-
-// Separate function to handle the generation request
-function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedSubject, questionCount, questionTypePref, fileName) {
-    const formData = new FormData();
-    formData.append('class', selectedClass);
-    formData.append('subject_id', selectedSubject);
-    formData.append('question_count', questionCount);
-    formData.append('question_type_pref', questionTypePref);
-    formData.append('gemini_uploaded_object', JSON.stringify(geminiObject));
-
-    $.ajax({
-        url: '/teacher/generate_from_pdf',
-        type: 'POST',
-        data: formData,
-        processData: false,
-        contentType: false,
-        success: function(response) {
-            updateLoadingProgress(90);
-
-            if (response.success && response.generated_text) {
-                console.log("AI Generated Text:\n", response.generated_text);
-                const parsedQuestions = parsePastedText(response.generated_text, selectedClass, selectedSubject);
-                updateLoadingProgress(100);
-
-                if (parsedQuestions.length > 0) {
-                    displayQuestions(parsedQuestions, `AI generated ${parsedQuestions.length} question(s) from ${fileName}`);
-                } else {
-                    alert('AI generated a response, but no valid questions could be parsed from it. The format might be incorrect. Please check the console log for the raw AI response.');
-                    clearPreviewArea();
-                }
-                hideLoadingModal();
-            } else {
-                alert('Error generating questions from PDF: ' + (response.message || 'Unknown error from server.'));
-                clearPreviewArea();
-                hideLoadingModal();
-            }
-        },
-        error: function(xhr) {
-            hideLoadingModal();
-            clearPreviewArea();
-            try {
-                const response = JSON.parse(xhr.responseText);
-                alert(`Generation Error (${xhr.status}): ${response.message || 'Server error during generation.'}`);
-            } catch (e) {
-                alert(`An unexpected error occurred while generating questions. Status: ${xhr.status}`);
-            }
-        }
-    });
-} // End #extractPdfQuestions listener
+    } // End #extractPdfQuestions listener
     $('#generateAIQuestions').on('click', function() {
-         confirmDiscardUnsavedChanges(() => {
-             const prompt = $('#aiPrompt').val()?.trim();
-             const difficulty = $('#difficultyLevel').val();
-             const questionType = $('#questionTypeAI').val();
-             const count = $('#questionCountAI').val();
-             const selectedClass = $classDropdown.val();
-             const selectedSubject = $subjectDropdown.val();
+        confirmDiscardUnsavedChanges(() => {
+            const prompt = $('#aiPrompt').val()?.trim();
+            const difficulty = $('#difficultyLevel').val();
+            const questionType = $('#questionTypeAI').val();
+            const count = $('#questionCountAI').val();
+            const selectedClass = $classDropdown.val();
+            const selectedSubject = $subjectDropdown.val();
 
-             if (!selectedClass || !selectedSubject) {
-                 alert('Please select Class and Subject first.'); return;
-             }
-             if (!prompt) { alert('Please enter a topic or prompt.'); return; }
-             if (!count || count <= 0) { alert('Please specify a valid number of questions.'); return; }
+            if (!selectedClass || !selectedSubject) {
+                alert('Please select Class and Subject first.');
+                return;
+            }
+            if (!prompt) {
+                alert('Please enter a topic or prompt.');
+                return;
+            }
+            if (!count || count <= 0) {
+                alert('Please specify a valid number of questions.');
+                return;
+            }
 
-             // TODO: Replace with actual AJAX call to AI generation backend
-             console.warn("Placeholder: Implement AJAX call for AI generation.");
+            // TODO: Replace with actual AJAX call to AI generation backend
+            console.warn("Placeholder: Implement AJAX call for AI generation.");
 
-             // Simulate
-              setTimeout(() => {
-                  const sampleData = getSampleQuestions(parseInt(count), questionType, selectedClass, selectedSubject);
-                  displayQuestions(sampleData, `Generated ${count} ${questionType} questions (Sample)`);
-                  hideLoadingModal();
-              }, 3000);
-         });
+            // Simulate
+            setTimeout(() => {
+                const sampleData = getSampleQuestions(parseInt(count), questionType, selectedClass, selectedSubject);
+                displayQuestions(sampleData, `Generated ${count} ${questionType} questions (Sample)`);
+                hideLoadingModal();
+            }, 3000);
+        });
     });
 
-    $('#generateYoutubeQuestions').on('click', function() {
-         confirmDiscardUnsavedChanges(() => {
-             const url = $('#youtubeUrl').val()?.trim();
-             const count = $('#youtubeQuestionCount').val();
-             const selectedClass = $classDropdown.val();
-             const selectedSubject = $subjectDropdown.val();
+    $('#generate_ques_from_website').on('click', function() {
+        confirmDiscardUnsavedChanges(() => {
+            const url = $('#websiteUrl').val()?.trim();
+            const count = $('#youtubeQuestionCount').val();
+            const selectedClass = $classDropdown.val();
+            const selectedSubject = $subjectDropdown.val();
 
-             if (!selectedClass || !selectedSubject) {
-                 alert('Please select Class and Subject first.'); return;
-             }
-             if (!url || !/^https?:\/\/(www\.)?(youtube\.com|youtu\.be)\/.+/.test(url)) {
-                 alert('Please enter a valid YouTube URL.'); return;
-             }
-             if (!count || count <= 0) { alert('Please specify a valid number of questions.'); return; }
+            if (!selectedClass || !selectedSubject) {
+                alert('Please select Class and Subject first.');
+                return;
+            }
+            if (!count || count <= 0) {
+                alert('Please specify a valid number of questions.');
+                return;
+            }
 
 
-             // TODO: Implement actual YouTube processing AJAX call
-              console.warn("Placeholder: Implement AJAX call for YouTube processing.");
-              // Simulate
-              setTimeout(() => {
-                   const sampleData = getSampleQuestions(parseInt(count), 'mcq', selectedClass, selectedSubject);
-                   displayQuestions(sampleData, `Generated ${count} questions from YouTube (Sample)`);
-                   hideLoadingModal();
-              }, 3500);
-         });
+
+            console.warn("Placeholder: Implement AJAX call for YouTube processing.");
+        });
     });
 
 
@@ -760,13 +768,15 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
 
     function downloadTemplateFile() {
         const csvContent = "Question Type,Question Text,Option A,Option B,Option C,Option D,Correct Answer,Marks,Difficulty\n" +
-          "mcq,What is the capital of France?,Paris,London,Berlin,Madrid,A,1,easy\n" + // Corrected example to A
-          "mcq,Which planet is known as the Red Planet?,Venus,Mars,Jupiter,Saturn,B,1,medium\n" +
-          "true_false,The Pacific Ocean is the largest ocean on Earth.,True,False,,,A,1,easy\n" +
-          "fill_in_blanks,The powerhouse of the cell is the [blank].,mitochondria,,,,1,medium\n"; // Added fill-in-blanks example
+            "mcq,What is the capital of France?,Paris,London,Berlin,Madrid,A,1,easy\n" + // Corrected example to A
+            "mcq,Which planet is known as the Red Planet?,Venus,Mars,Jupiter,Saturn,B,1,medium\n" +
+            "true_false,The Pacific Ocean is the largest ocean on Earth.,True,False,,,A,1,easy\n" +
+            "fill_in_blanks,The powerhouse of the cell is the [blank].,mitochondria,,,,1,medium\n"; // Added fill-in-blanks example
 
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob([csvContent], {
+            type: 'text/csv;charset=utf-8;'
+        });
         const link = document.createElement("a");
         if (link.download !== undefined) { // Feature detection
             const url = URL.createObjectURL(blob);
@@ -798,9 +808,9 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
                 $questionsPreview.data(PREVIEW_DATA_KEY, allQuestions); // Update stored data
 
                 // Re-render the preview
-                 const currentSummaryText = $questionsSummary.text() || 'Questions preview';
-                 // Try to preserve the source part of the summary
-                 const baseSummary = currentSummaryText.substring(0, currentSummaryText.lastIndexOf('(')).trim() || 'Questions preview';
+                const currentSummaryText = $questionsSummary.text() || 'Questions preview';
+                // Try to preserve the source part of the summary
+                const baseSummary = currentSummaryText.substring(0, currentSummaryText.lastIndexOf('(')).trim() || 'Questions preview';
                 displayQuestions(allQuestions, baseSummary);
 
                 if (allQuestions.length === 0) {
@@ -809,8 +819,8 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
                     // displayQuestions handles the "empty" message automatically
                 }
             } else {
-                 console.error("Could not find question data to remove for index:", indexToRemove);
-                 alert("Error: Could not remove question data.");
+                console.error("Could not find question data to remove for index:", indexToRemove);
+                alert("Error: Could not remove question data.");
             }
         }
     });
@@ -822,31 +832,37 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
         $saveQuestionsButton.on('click', function() {
             const originalQuestions = $questionsPreview.data(PREVIEW_DATA_KEY);
 
-             // Validate and Prepare Data
-            const { valid, questionsToSave, errors } = validateAndPrepareQuestionsForSave(originalQuestions);
+            // Validate and Prepare Data
+            const {
+                valid,
+                questionsToSave,
+                errors
+            } = validateAndPrepareQuestionsForSave(originalQuestions);
 
             if (!valid) {
-                 alert("Cannot save questions due to the following errors:\n- " + errors.join("\n- "));
-                 // Optionally highlight errors in the preview here if possible
-                 return;
-             }
+                alert("Cannot save questions due to the following errors:\n- " + errors.join("\n- "));
+                // Optionally highlight errors in the preview here if possible
+                return;
+            }
 
             // Proceed with saving if valid
             showLoadingModal('Saving Questions...', 'Adding questions to the bank.');
-             updateLoadingProgress(10); // Initial progress
+            updateLoadingProgress(10); // Initial progress
 
             $.ajax({
                 url: '/teacher/save_imported_questions', // Backend endpoint
                 type: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({ questions: questionsToSave }), // Send validated & normalized questions
+                data: JSON.stringify({
+                    questions: questionsToSave
+                }), // Send validated & normalized questions
                 dataType: 'json',
                 success: function(response) {
-                     updateLoadingProgress(100); // Mark as complete
+                    updateLoadingProgress(100); // Mark as complete
 
                     if (response.success) {
                         const addedCount = response.added_count || 0;
-                         // Update dashboard counters if elements exist
+                        // Update dashboard counters if elements exist
                         const currentTotal = parseInt($totalQuestionsDisplay.text()) || 0;
                         if ($totalQuestionsDisplay.length) $totalQuestionsDisplay.text(currentTotal + addedCount);
                         if ($recentlyAddedDisplay.length) $recentlyAddedDisplay.text(addedCount);
@@ -865,8 +881,8 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
                     }
                 },
                 error: function(xhr) {
-                     updateLoadingProgress(0); // Reset progress on error
-                     hideLoadingModal();
+                    updateLoadingProgress(0); // Reset progress on error
+                    hideLoadingModal();
                     try {
                         const response = JSON.parse(xhr.responseText);
                         alert(`Save Error (${xhr.status}): ${response.message || 'Server error'}`);
@@ -888,7 +904,7 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
 
     // --- Question Metadata Modal ---
     // Using event delegation for potentially dynamically added buttons
-     $(document).on('click', '.view-question-btn', function() {
+    $(document).on('click', '.view-question-btn', function() {
         const questionId = $(this).data('question-id');
         const $modalBody = $('#questionModalBody');
         const $modalLabel = $('#viewQuestionModalLabel'); // Assuming this ID exists for the modal title
@@ -915,11 +931,11 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
         $.ajax({
             url: `/get_question_metadata/${questionId}`, // Use template literal
             type: 'GET',
-            success: function (data) {
+            success: function(data) {
                 $modalLabel.text('Question Metadata'); // Set title on success
                 $modalBody.html(data); // Populate with fetched HTML content
             },
-            error: function (xhr) {
+            error: function(xhr) {
                 console.error("Error fetching question metadata:", xhr);
                 $modalLabel.text('Error');
                 $modalBody.html('<div class="alert alert-danger">Error loading question metadata. Please try again.</div>');
@@ -985,9 +1001,9 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
             });
             $questionsPreview.removeClass('d-none');
             // Smooth scroll to the top of the preview area
-             $('html, body').animate({
-                 scrollTop: $questionsPreview.offset().top - 70 // Adjust offset if you have a fixed header
-             }, 500);
+            $('html, body').animate({
+                scrollTop: $questionsPreview.offset().top - 70 // Adjust offset if you have a fixed header
+            }, 500);
 
         } else {
             $questionsList.html('<p class="text-center text-muted my-4">No valid questions found to display in the preview.</p>');
@@ -1002,13 +1018,34 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
      */
     function getQuestionTypeInfo(type) {
         switch (type?.toLowerCase()) {
-            case 'mcq': return { typeName: 'Multiple Choice', badgeClass: 'bg-primary' };
-            case 'true_false': return { typeName: 'True/False', badgeClass: 'bg-success' };
-            case 'fill_in_blanks': return { typeName: 'Fill Blanks', badgeClass: 'bg-info text-dark' }; // Adjusted contrast
-            case 'match_columns': return { typeName: 'Matching', badgeClass: 'bg-warning text-dark' }; // Adjusted contrast
-            case 'assertion_reason': return { typeName: 'Assertion Reason', badgeClass: 'bg-secondary' };
-            case 'case_based': return { typeName: 'Case Based', badgeClass: 'bg-danger' };
-            default: return { typeName: type ? String(type) : 'Unknown Type', badgeClass: 'bg-light text-dark border' };
+            case 'mcq':
+                return {
+                    typeName: 'Multiple Choice', badgeClass: 'bg-primary'
+                };
+            case 'true_false':
+                return {
+                    typeName: 'True/False', badgeClass: 'bg-success'
+                };
+            case 'fill_in_blanks':
+                return {
+                    typeName: 'Fill Blanks', badgeClass: 'bg-info text-dark'
+                }; // Adjusted contrast
+            case 'match_columns':
+                return {
+                    typeName: 'Matching', badgeClass: 'bg-warning text-dark'
+                }; // Adjusted contrast
+            case 'assertion_reason':
+                return {
+                    typeName: 'Assertion Reason', badgeClass: 'bg-secondary'
+                };
+            case 'case_based':
+                return {
+                    typeName: 'Case Based', badgeClass: 'bg-danger'
+                };
+            default:
+                return {
+                    typeName: type ? String(type) : 'Unknown Type', badgeClass: 'bg-light text-dark border'
+                };
         }
     }
 
@@ -1021,12 +1058,18 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
     function renderQuestionDetails(question, index) {
         try {
             switch (question.question_type?.toLowerCase()) {
-                case 'mcq': return renderMcqPreview(question, index);
-                case 'true_false': return renderTrueFalsePreview(question, index);
-                case 'fill_in_blanks': return renderFillBlanksPreview(question);
-                case 'match_columns': return renderMatchColumnsPreview(question);
-                case 'assertion_reason': return renderAssertionReasonPreview(question);
-                case 'case_based': return renderCaseBasedPreview(question, index);
+                case 'mcq':
+                    return renderMcqPreview(question, index);
+                case 'true_false':
+                    return renderTrueFalsePreview(question, index);
+                case 'fill_in_blanks':
+                    return renderFillBlanksPreview(question);
+                case 'match_columns':
+                    return renderMatchColumnsPreview(question);
+                case 'assertion_reason':
+                    return renderAssertionReasonPreview(question);
+                case 'case_based':
+                    return renderCaseBasedPreview(question, index);
                 default:
                     return `<p class="text-muted fst-italic">Preview display not implemented for type: ${question.question_type || 'Unknown'}</p>`;
             }
@@ -1045,9 +1088,9 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
         let correctIndex = -1;
         const displayAnswer = question.correct_answer; // Use the potentially un-normalized value for comparison
         if (typeof displayAnswer === 'string' && /^[A-D]$/i.test(displayAnswer)) {
-             correctIndex = displayAnswer.toUpperCase().charCodeAt(0) - 65;
+            correctIndex = displayAnswer.toUpperCase().charCodeAt(0) - 65;
         } else if (!isNaN(parseInt(displayAnswer)) && displayAnswer >= 0 && displayAnswer < options.length) {
-             correctIndex = parseInt(displayAnswer);
+            correctIndex = parseInt(displayAnswer);
         }
 
         if (options.length === 0) return '<p class="text-warning">No options found for this MCQ.</p>';
@@ -1078,20 +1121,20 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
         // Normalize answer *only for display comparison* here
         let isTrueCorrect = false;
         const displayAnswer = question.correct_answer;
-         if (typeof displayAnswer === 'string') {
+        if (typeof displayAnswer === 'string') {
             const upperAnswer = displayAnswer.toUpperCase();
             isTrueCorrect = ['A', 'TRUE', 'T', '0'].includes(upperAnswer);
-         } else if (typeof displayAnswer === 'number') {
+        } else if (typeof displayAnswer === 'number') {
             isTrueCorrect = displayAnswer === 0;
-         } else if (typeof displayAnswer === 'boolean') {
+        } else if (typeof displayAnswer === 'boolean') {
             isTrueCorrect = displayAnswer;
-         }
+        }
 
         options.forEach((option, i) => {
             const isCorrect = (i === 0 && isTrueCorrect) || (i === 1 && !isTrueCorrect);
             const labelClass = isCorrect ? 'text-success fw-bold' : '';
             const checkedAttr = isCorrect ? 'checked' : '';
-             // Use unique IDs/names for radio buttons
+            // Use unique IDs/names for radio buttons
             const radioName = `preview_q${index}_tf`;
             const radioId = `preview_q${index}_tf_opt${i}`;
 
@@ -1121,7 +1164,7 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
         return html;
     }
 
-     function renderMatchColumnsPreview(question) {
+    function renderMatchColumnsPreview(question) {
         let html = '';
         const colA = Array.isArray(question.column_a) ? question.column_a : [];
         const colB = Array.isArray(question.column_b) ? question.column_b : [];
@@ -1155,7 +1198,7 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
         // Display Column B options separately for clarity
         html += '<hr class="my-2"><div class="row"><div class="col-md-6"></div><div class="col-md-6"><strong>Column B Choices:</strong><ul class="list-unstyled mb-0">';
         colB.forEach((itemB, idx) => {
-             html += `<li>${String.fromCharCode(65 + idx)}. ${itemB || 'N/A'}</li>`;
+            html += `<li>${String.fromCharCode(65 + idx)}. ${itemB || 'N/A'}</li>`;
         });
         html += '</ul></div></div>';
 
@@ -1182,12 +1225,12 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
 
                 const subOptions = Array.isArray(subQ.options) ? subQ.options : [];
                 let subCorrectIndex = -1;
-                 const subDisplayAnswer = subQ.correct_answer; // Use potentially un-normalized for display
-                 if (typeof subDisplayAnswer === 'string' && /^[A-D]$/i.test(subDisplayAnswer)) {
-                     subCorrectIndex = subDisplayAnswer.toUpperCase().charCodeAt(0) - 65;
-                 } else if (!isNaN(parseInt(subDisplayAnswer)) && subDisplayAnswer >= 0 && subDisplayAnswer < subOptions.length) {
-                     subCorrectIndex = parseInt(subDisplayAnswer);
-                 }
+                const subDisplayAnswer = subQ.correct_answer; // Use potentially un-normalized for display
+                if (typeof subDisplayAnswer === 'string' && /^[A-D]$/i.test(subDisplayAnswer)) {
+                    subCorrectIndex = subDisplayAnswer.toUpperCase().charCodeAt(0) - 65;
+                } else if (!isNaN(parseInt(subDisplayAnswer)) && subDisplayAnswer >= 0 && subDisplayAnswer < subOptions.length) {
+                    subCorrectIndex = parseInt(subDisplayAnswer);
+                }
 
                 if (subOptions.length > 0) {
                     subOptions.forEach((opt, optIndex) => {
@@ -1227,151 +1270,151 @@ function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedS
      */
 
     /**
- * Parses a block of text containing questions into an array of question objects.
- * Tries to determine question type based on common formats.
- * Expected Formats:
- * MCQ:
- *   1. Question text?
- *   a) Option A
- *   b) Option B *
- *   c) Option C
- * True/False:
- *   2. Statement?
- *   a) True *
- *   b) False
- * Fill Blanks (FITB):
- *   3. The capital of [blank] is Paris.
- *   Answer: France
- *   (Multiple blanks possible if text contains multiple [blank] and multiple Answer lines)
- *
- * @param {string} textBlock - The raw text pasted by the user or returned by AI.
- * @param {string} defaultClass - Class ID to assign.
- * @param {string} defaultSubjectId - Subject ID to assign.
- * @returns {Array<Object>} - Array of parsed question objects.
- */
-function parsePastedText(textBlock, defaultClass, defaultSubjectId) {
-    const questions = [];
-    if (!textBlock || typeof textBlock !== 'string') return questions;
+     * Parses a block of text containing questions into an array of question objects.
+     * Tries to determine question type based on common formats.
+     * Expected Formats:
+     * MCQ:
+     *   1. Question text?
+     *   a) Option A
+     *   b) Option B *
+     *   c) Option C
+     * True/False:
+     *   2. Statement?
+     *   a) True *
+     *   b) False
+     * Fill Blanks (FITB):
+     *   3. The capital of [blank] is Paris.
+     *   Answer: France
+     *   (Multiple blanks possible if text contains multiple [blank] and multiple Answer lines)
+     *
+     * @param {string} textBlock - The raw text pasted by the user or returned by AI.
+     * @param {string} defaultClass - Class ID to assign.
+     * @param {string} defaultSubjectId - Subject ID to assign.
+     * @returns {Array<Object>} - Array of parsed question objects.
+     */
+    function parsePastedText(textBlock, defaultClass, defaultSubjectId) {
+        const questions = [];
+        if (!textBlock || typeof textBlock !== 'string') return questions;
 
-    // Split into potential question blocks (more robust splitting)
-    const questionBlocks = textBlock.trim().split(/^\s*(\d+)\.\s*/m).slice(1); // Split by lines starting with number+dot, keep the number
+        // Split into potential question blocks (more robust splitting)
+        const questionBlocks = textBlock.trim().split(/^\s*(\d+)\.\s*/m).slice(1); // Split by lines starting with number+dot, keep the number
 
-    for (let i = 0; i < questionBlocks.length; i += 2) {
-        const questionNumber = questionBlocks[i]; // The number captured by split
-        const blockContent = questionBlocks[i + 1]?.trim();
-        if (!blockContent) continue;
+        for (let i = 0; i < questionBlocks.length; i += 2) {
+            const questionNumber = questionBlocks[i]; // The number captured by split
+            const blockContent = questionBlocks[i + 1]?.trim();
+            if (!blockContent) continue;
 
-        const lines = blockContent.split('\n').map(line => line.trim()).filter(line => line);
-        if (lines.length < 2) continue; // Need at least question text and one option/answer
+            const lines = blockContent.split('\n').map(line => line.trim()).filter(line => line);
+            if (lines.length < 2) continue; // Need at least question text and one option/answer
 
-        const questionText = lines[0];
-        let questionType = 'unknown';
-        const options = [];
-        const blanks = [];
-        let correctAnswer = null; // Use null initially
-        let tempCorrectIndex = -1; // For MCQ/TF
+            const questionText = lines[0];
+            let questionType = 'unknown';
+            const options = [];
+            const blanks = [];
+            let correctAnswer = null; // Use null initially
+            let tempCorrectIndex = -1; // For MCQ/TF
 
-        // --- Try to determine question type and parse details ---
+            // --- Try to determine question type and parse details ---
 
-        // Check for FITB pattern first (Answer: ...)
-        const answerLines = lines.filter(line => line.toLowerCase().startsWith('answer:'));
-        if (answerLines.length > 0 && questionText.includes('[blank]')) {
-            questionType = 'fill_in_blanks';
-            answerLines.forEach(line => {
-                const answer = line.substring(7).trim(); // Get text after "Answer: "
-                if (answer) blanks.push(answer);
-            });
-        } else {
-            // Check for MCQ/TrueFalse patterns (lines starting with a) b) etc.)
-            let optionIndex = 0;
-            let isPotentiallyMcqOrTF = false;
-            const optionRegex = /^\s*([a-z])[\.\)]\s*(.*?)(?:\s*\*?\s*$)/i; // Capture letter, text, optional *
+            // Check for FITB pattern first (Answer: ...)
+            const answerLines = lines.filter(line => line.toLowerCase().startsWith('answer:'));
+            if (answerLines.length > 0 && questionText.includes('[blank]')) {
+                questionType = 'fill_in_blanks';
+                answerLines.forEach(line => {
+                    const answer = line.substring(7).trim(); // Get text after "Answer: "
+                    if (answer) blanks.push(answer);
+                });
+            } else {
+                // Check for MCQ/TrueFalse patterns (lines starting with a) b) etc.)
+                let optionIndex = 0;
+                let isPotentiallyMcqOrTF = false;
+                const optionRegex = /^\s*([a-z])[\.\)]\s*(.*?)(?:\s*\*?\s*$)/i; // Capture letter, text, optional *
 
-            for (let j = 1; j < lines.length; j++) {
-                const match = lines[j].match(optionRegex);
-                if (match) {
-                    isPotentiallyMcqOrTF = true;
-                    const optionLetter = match[1].toLowerCase();
-                    let optionText = match[2].trim();
-                    const isMarkedCorrect = lines[j].endsWith('*'); // Check for *
+                for (let j = 1; j < lines.length; j++) {
+                    const match = lines[j].match(optionRegex);
+                    if (match) {
+                        isPotentiallyMcqOrTF = true;
+                        const optionLetter = match[1].toLowerCase();
+                        let optionText = match[2].trim();
+                        const isMarkedCorrect = lines[j].endsWith('*'); // Check for *
 
-                    // Basic validation: expect letters a, b, c, d...
-                    if (optionLetter.charCodeAt(0) === 97 + optionIndex) { // 97 is 'a'
-                       // Remove trailing '*' if present in captured text
-                       if (optionText.endsWith('*')) {
-                           optionText = optionText.slice(0, -1).trim();
-                       }
-                       options.push(optionText);
-                       if (isMarkedCorrect) {
-                           tempCorrectIndex = optionIndex;
-                       }
-                       optionIndex++;
+                        // Basic validation: expect letters a, b, c, d...
+                        if (optionLetter.charCodeAt(0) === 97 + optionIndex) { // 97 is 'a'
+                            // Remove trailing '*' if present in captured text
+                            if (optionText.endsWith('*')) {
+                                optionText = optionText.slice(0, -1).trim();
+                            }
+                            options.push(optionText);
+                            if (isMarkedCorrect) {
+                                tempCorrectIndex = optionIndex;
+                            }
+                            optionIndex++;
+                        } else {
+                            // console.warn(`Skipping unexpected option format: ${lines[j]}`);
+                            // Allow skipping over potential instruction lines etc.
+                            // If letters are out of sequence, it might not be a standard MCQ/TF
+                            isPotentiallyMcqOrTF = false; // Reset if sequence breaks badly
+                            break;
+                        }
                     } else {
-                       // console.warn(`Skipping unexpected option format: ${lines[j]}`);
-                       // Allow skipping over potential instruction lines etc.
-                       // If letters are out of sequence, it might not be a standard MCQ/TF
-                       isPotentiallyMcqOrTF = false; // Reset if sequence breaks badly
-                       break;
+                        // If we already found options and encounter a non-option line, stop parsing options for this question
+                        if (isPotentiallyMcqOrTF) break;
                     }
-                } else {
-                   // If we already found options and encounter a non-option line, stop parsing options for this question
-                   if(isPotentiallyMcqOrTF) break;
+                }
+
+
+                if (isPotentiallyMcqOrTF && options.length > 0) {
+                    // Distinguish between True/False and MCQ
+                    if (options.length === 2 &&
+                        options[0].toLowerCase() === 'true' &&
+                        options[1].toLowerCase() === 'false') {
+                        questionType = 'true_false';
+                        correctAnswer = tempCorrectIndex === 0 ? '0' : '1'; // Normalize T/F answer immediately
+                    } else if (options.length >= 2 && options.length <= 4) { // Assuming 2-4 options for MCQ
+                        questionType = 'mcq';
+                        correctAnswer = tempCorrectIndex; // Keep index for MCQ
+                    } else {
+                        // Could be MCQ with > 4 options or something else
+                        questionType = 'unknown'; // Revert if not standard
+                        correctAnswer = null;
+                        options.length = 0; // Clear invalid options
+                    }
                 }
             }
 
 
-            if (isPotentiallyMcqOrTF && options.length > 0) {
-                // Distinguish between True/False and MCQ
-                if (options.length === 2 &&
-                    options[0].toLowerCase() === 'true' &&
-                    options[1].toLowerCase() === 'false')
-                {
-                    questionType = 'true_false';
-                    correctAnswer = tempCorrectIndex === 0 ? '0' : '1'; // Normalize T/F answer immediately
-                } else if (options.length >= 2 && options.length <= 4) { // Assuming 2-4 options for MCQ
-                    questionType = 'mcq';
-                    correctAnswer = tempCorrectIndex; // Keep index for MCQ
-                } else {
-                    // Could be MCQ with > 4 options or something else
-                    questionType = 'unknown'; // Revert if not standard
-                    correctAnswer = null;
-                    options.length = 0; // Clear invalid options
+            // --- Construct question object if type identified ---
+            if (questionType !== 'unknown') {
+                const question = {
+                    question_type: questionType,
+                    text: questionText,
+                    marks: 1, // Default marks
+                    difficulty: 'medium', // Default difficulty
+                    class: defaultClass,
+                    subject_id: defaultSubjectId,
+                    // Add type-specific fields
+                };
+
+                if (questionType === 'mcq') {
+                    question.options = options;
+                    question.correct_answer = correctAnswer; // Will be normalized later by validateAndPrepareQuestionsForSave
+                } else if (questionType === 'true_false') {
+                    question.options = ['True', 'False']; // Standardize options
+                    question.correct_answer = correctAnswer; // Already normalized ('0' or '1')
+                } else if (questionType === 'fill_in_blanks') {
+                    question.blanks = blanks;
                 }
+                // Add other types (matching, assertion/reason) here if needed based on parsing rules
+
+                questions.push(question);
+            } else {
+                console.warn(`Could not determine question type or parse structure for block starting with: "${questionText.substring(0, 50)}..."`);
             }
-        }
+        } // end loop through blocks
 
+        return questions;
+    }
 
-        // --- Construct question object if type identified ---
-        if (questionType !== 'unknown') {
-            const question = {
-                question_type: questionType,
-                text: questionText,
-                marks: 1, // Default marks
-                difficulty: 'medium', // Default difficulty
-                class: defaultClass,
-                subject_id: defaultSubjectId,
-                // Add type-specific fields
-            };
-
-            if (questionType === 'mcq') {
-                question.options = options;
-                question.correct_answer = correctAnswer; // Will be normalized later by validateAndPrepareQuestionsForSave
-            } else if (questionType === 'true_false') {
-                question.options = ['True', 'False']; // Standardize options
-                question.correct_answer = correctAnswer; // Already normalized ('0' or '1')
-            } else if (questionType === 'fill_in_blanks') {
-                question.blanks = blanks;
-            }
-            // Add other types (matching, assertion/reason) here if needed based on parsing rules
-
-            questions.push(question);
-        } else {
-            console.warn(`Could not determine question type or parse structure for block starting with: "${questionText.substring(0, 50)}..."`);
-        }
-    } // end loop through blocks
-
-    return questions;
-}
     function getSampleQuestions(count = 3, type = 'mcq', classId = '9', subjectId = 1) {
         const samples = [];
         for (let i = 1; i <= count; i++) {
@@ -1393,23 +1436,23 @@ function parsePastedText(textBlock, defaultClass, defaultSubjectId) {
                 question.text = `Sample fill [blank] question ${i}. The answer is [blank].`;
                 question.blanks = [`answer_${i}a`, `answer_${i}b`];
             }
-             // Add more types if needed for simulation
+            // Add more types if needed for simulation
             samples.push(question);
         }
         return samples;
     }
 
     // --- Initial Setup ---
-     // Populate class dropdown on load (assuming static list for now)
-     const classOptions = ['6', '7', '8', '9', '10']; // Example classes
-     $classDropdown.append('<option value="" selected disabled>Select a class</option>');
-     classOptions.forEach(cls => {
-         $classDropdown.append(`<option value="${cls}">Class ${cls}</option>`);
-     });
-     $subjectDropdown.prop('disabled', true).html('<option value="" selected disabled>Select class first</option>');
+    // Populate class dropdown on load (assuming static list for now)
+    const classOptions = ['6', '7', '8', '9', '10']; // Example classes
+    $classDropdown.append('<option value="" selected disabled>Select a class</option>');
+    classOptions.forEach(cls => {
+        $classDropdown.append(`<option value="${cls}">Class ${cls}</option>`);
+    });
+    $subjectDropdown.prop('disabled', true).html('<option value="" selected disabled>Select class first</option>');
 
-     // Hide preview initially
-     $questionsPreview.addClass('d-none');
+    // Hide preview initially
+    $questionsPreview.addClass('d-none');
 
 }); // End of $(document).ready()
 
