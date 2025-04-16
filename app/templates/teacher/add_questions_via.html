@@ -291,6 +291,15 @@ d) Saturn</pre>
                       <label for="questionCount" class="form-label">Number of Questions</label>
                       <input type="number" class="form-control" id="questionCount" min="1" max="20" value="10">
                     </div>
+                    <div class="form-group">
+                      <label for="questionTypePdf" class="form-label">Question Type</label>
+                      <select class="form-select" id="questionTypePdf">
+                        <option value="mcq">Multiple Choice</option>
+                        <option value="true_false">True/False</option>
+                        <option value="matching">Matching</option>
+                        <option value="mixed">Mixed Types</option>
+                      </select>
+                    </div>
                   </div>
                   <div class="col-12">
                     <button class="btn btn-primary w-100" id="extractPdfQuestions">

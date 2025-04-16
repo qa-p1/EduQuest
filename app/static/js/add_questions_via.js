@@ -575,8 +575,7 @@ $(document).ready(function() { // Use jQuery's ready function
         const questionCount = $('#questionCount').val(); // Get desired count
         const selectedClass = $classDropdown.val();
         const selectedSubject = $subjectDropdown.val();
-        // Optional: Get question type preference if you add a dropdown
-        // const questionTypePref = $('#questionTypePdf').val() || 'mcq';
+        const questionTypePref = $('#questionTypePdf').val() || 'mcq';
         console.log('clicked')
         if (!selectedClass || !selectedSubject) {
             alert('Please select Class and Subject first.'); return;
@@ -587,69 +586,114 @@ $(document).ready(function() { // Use jQuery's ready function
         if (!questionCount || questionCount <= 0 || questionCount > 20) { // Match backend limit
             alert('Please specify a valid number of questions (1-20).'); return;
         }
-
-        const formData = new FormData();
-        formData.append('file', pdfFile);
-        formData.append('class', selectedClass);
-        formData.append('subject_id', selectedSubject);
-        formData.append('question_count', questionCount);
-        // formData.append('question_type_pref', questionTypePref); // Send if needed
-
-        showLoadingModal('Generating from PDF...', `Asking AI to create ${questionCount} questions from ${pdfFile.name}. This may take a minute...`);
+        showLoadingModal('Generating from PDF...', `Uploading ${pdfFile.name} and preparing for AI processing...`);
         updateLoadingProgress(10);
 
+        let geminiUploadedObject = null;
+
+        const fileFormData = new FormData();
+        fileFormData.append('file', pdfFile);
+
+        // First AJAX call to upload the PDF
         $.ajax({
-            url: '/teacher/generate_from_pdf', // The new backend endpoint
+            url: '/teacher/upload_pdf',
             type: 'POST',
-            data: formData,
+            data: fileFormData,
             processData: false,
             contentType: false,
-            xhr: function() { // Optional: Add upload progress if desired, less critical for AI wait time
+            xhr: function() {
                 const xhr = new window.XMLHttpRequest();
                 xhr.upload.addEventListener('progress', function(evt) {
                     if (evt.lengthComputable) {
-                        const percentComplete = Math.round((evt.loaded / evt.total) * 30); // Upload is maybe 30% of the work
+                        const percentComplete = Math.round((evt.loaded / evt.total) * 30);
                         updateLoadingProgress(10 + percentComplete); // Progress from 10% to 40% during upload
                     }
                 }, false);
                 return xhr;
             },
             success: function(response) {
-                updateLoadingProgress(75); // Reached server, AI is working
+                updateLoadingProgress(50);
+                if (response.success && response.uploaded_file) {
+                    geminiUploadedObject = response.uploaded_file;
+                    console.log("PDF uploaded successfully:", geminiUploadedObject);
 
-                if (response.success && response.generated_text) {
-                    console.log("AI Generated Text:\n", response.generated_text); // For debugging
-                    // Reuse the *same* parsing function as pasted text!
-                    const parsedQuestions = parsePastedText(response.generated_text, selectedClass, selectedSubject);
-                     updateLoadingProgress(100);
+                    // Now we proceed with the generation request
+                    updateLoadingProgress(60);
 
-                    if (parsedQuestions.length > 0) {
-                        displayQuestions(parsedQuestions, `AI generated ${parsedQuestions.length} question(s) from ${pdfFile.name}`);
-                    } else {
-                        alert('AI generated a response, but no valid questions could be parsed from it. The format might be incorrect. Please check the console log for the raw AI response.');
-                        clearPreviewArea();
-                    }
-                     hideLoadingModal();
+                    generateQuestionsFromUploadedPdf(
+                        geminiUploadedObject,
+                        selectedClass,
+                        selectedSubject,
+                        questionCount,
+                        questionTypePref,
+                        pdfFile.name
+                    );
                 } else {
-                     // AI failed or backend error
-                     alert('Error generating questions from PDF: ' + (response.message || 'Unknown error from server.'));
-                     clearPreviewArea();
-                     hideLoadingModal(); // Hide modal on failure too
+                    hideLoadingModal();
+                    alert('Error uploading PDF: ' + (response.message || 'Unknown error during upload.'));
                 }
             },
             error: function(xhr) {
                 hideLoadingModal();
-                clearPreviewArea();
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    alert(`Generation Error (${xhr.status}): ${response.message || 'Server error during generation.'}`);
+                    alert(`Upload Error (${xhr.status}): ${response.message || 'Server error during upload.'}`);
                 } catch (e) {
-                    alert(`An unexpected error occurred while generating questions. Status: ${xhr.status}`);
+                    alert(`An unexpected error occurred while uploading the PDF. Status: ${xhr.status}`);
                 }
             }
-        }); // End AJAX call
-    }); // End confirmDiscardUnsavedChanges
-}); // End #extractPdfQuestions listener
+        });
+    });
+});
+
+// Separate function to handle the generation request
+function generateQuestionsFromUploadedPdf(geminiObject, selectedClass, selectedSubject, questionCount, questionTypePref, fileName) {
+    const formData = new FormData();
+    formData.append('class', selectedClass);
+    formData.append('subject_id', selectedSubject);
+    formData.append('question_count', questionCount);
+    formData.append('question_type_pref', questionTypePref);
+    formData.append('gemini_uploaded_object', JSON.stringify(geminiObject));
+
+    $.ajax({
+        url: '/teacher/generate_from_pdf',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            updateLoadingProgress(90);
+
+            if (response.success && response.generated_text) {
+                console.log("AI Generated Text:\n", response.generated_text);
+                const parsedQuestions = parsePastedText(response.generated_text, selectedClass, selectedSubject);
+                updateLoadingProgress(100);
+
+                if (parsedQuestions.length > 0) {
+                    displayQuestions(parsedQuestions, `AI generated ${parsedQuestions.length} question(s) from ${fileName}`);
+                } else {
+                    alert('AI generated a response, but no valid questions could be parsed from it. The format might be incorrect. Please check the console log for the raw AI response.');
+                    clearPreviewArea();
+                }
+                hideLoadingModal();
+            } else {
+                alert('Error generating questions from PDF: ' + (response.message || 'Unknown error from server.'));
+                clearPreviewArea();
+                hideLoadingModal();
+            }
+        },
+        error: function(xhr) {
+            hideLoadingModal();
+            clearPreviewArea();
+            try {
+                const response = JSON.parse(xhr.responseText);
+                alert(`Generation Error (${xhr.status}): ${response.message || 'Server error during generation.'}`);
+            } catch (e) {
+                alert(`An unexpected error occurred while generating questions. Status: ${xhr.status}`);
+            }
+        }
+    });
+} // End #extractPdfQuestions listener
     $('#generateAIQuestions').on('click', function() {
          confirmDiscardUnsavedChanges(() => {
              const prompt = $('#aiPrompt').val()?.trim();

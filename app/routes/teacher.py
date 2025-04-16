@@ -1,3 +1,5 @@
+import json
+
 from app.models.question import add_question as model_add_question
 from datetime import datetime
 from flask import Blueprint, render_template, session, request, flash, jsonify
@@ -14,7 +16,7 @@ from app.models.teacher_services import (
     get_total_students, get_subject_name, calculate_completion_percentage
 )
 import google.generativeai as genai
-
+from io import BytesIO
 teacher_bp = Blueprint('teacher', __name__, url_prefix='/teacher')
 import os
 from dotenv import load_dotenv
@@ -647,9 +649,7 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
-        print("Gemini API configured successfully.")
     except Exception as config_err:
-        print(f"Error configuring Gemini API: {config_err}")
         # Handle configuration error appropriately
 else:
     print("Warning: GEMINI_API_KEY not found in environment variables. PDF generation will fail.")
@@ -716,64 +716,85 @@ Generate the questions now based *only* on the provided file content:
     return full_prompt.strip()
 
 
-@teacher_bp.route('/generate_from_pdf', methods=['POST'])
+@teacher_bp.route('/upload_pdf', methods=['POST'])
 @login_required(user_types=['teacher'])
-def generate_from_pdf():
-    print("--- Received request for /generate_from_pdf ---")
-
-    if not GEMINI_API_KEY:
-        print("Error: AI Generation not configured (GEMINI_API_KEY missing).")
-        return jsonify({'success': False, 'message': 'AI Generation is not configured on the server.'}), 503
-
+def upload_pdf_gemini():
     if 'file' not in request.files:
-        print("Error: No 'file' part in the request.")
         return jsonify({'success': False, 'message': 'No PDF file uploaded'}), 400
 
     file = request.files['file']
     filename = file.filename
 
     if filename == '':
-        print("Error: No file selected (empty filename).")
         return jsonify({'success': False, 'message': 'No file selected'}), 400
-
-    print(f"Received file: {filename}")
 
     # File extension check
     if not filename.lower().endswith('.pdf'):
-        print(f"Error: Invalid file extension for {filename}. Only .pdf is allowed.")
         return jsonify({'success': False, 'message': 'Invalid file extension. Only .pdf is allowed.'}), 400
-    print(f"File extension check passed for: {filename}")
+
+    try:
+        file_content = file.read()
+        file_bytes = BytesIO(file_content)
+
+        # Use the BytesIO object as the file source
+        uploaded_file_object = genai.upload_file(
+            path=file_bytes,  # Pass BytesIO directly instead of path
+            display_name=filename,
+            mime_type='application/pdf'
+        )
+
+        # Return the necessary information about the uploaded file to the frontend
+        return jsonify({
+            'success': True,
+            'message': 'File uploaded successfully',
+            'uploaded_file': {
+                'name': uploaded_file_object.name,
+                'uri': uploaded_file_object.uri,
+                'display_name': filename,
+                'mime_type': 'application/pdf'
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error uploading file: {str(e)}'}), 500
+
+
+@teacher_bp.route('/generate_from_pdf', methods=['POST'])
+@login_required(user_types=['teacher'])
+def generate_from_pdf():
+
+    if not GEMINI_API_KEY:
+        return jsonify({'success': False, 'message': 'AI Generation is not configured on the server.'}), 503
 
     # Input validation
     selected_class = request.form.get('class')
     selected_subject_id = request.form.get('subject_id')
     question_count = request.form.get('question_count', '5')
     question_type_pref = request.form.get('question_type_pref', 'mcq')
+    gemini_uploaded_object_json = request.form.get('gemini_uploaded_object')
 
-    print(
-        f"Form Data - Class: {selected_class}, Subject ID: {selected_subject_id}, Count: {question_count}, Type Pref: {question_type_pref}")
-
-    if not all([selected_class, selected_subject_id, question_count]):
-        print("Error: Missing required form fields (class, subject, or count).")
-        return jsonify({'success': False, 'message': 'Missing class, subject, or question count.'}), 400
+    if not gemini_uploaded_object_json:
+        return jsonify({'success': False, 'message': 'Missing uploaded file information.'}), 400
 
     try:
-        count = int(question_count)
-        if not 1 <= count <= 20:
-            raise ValueError("Invalid question count.")
-    except ValueError:
-        print(f"Error: Invalid question count value: {question_count}")
-        return jsonify({'success': False, 'message': 'Invalid number of questions specified (must be 1-20).'}), 400
+        gemini_uploaded_info = json.loads(gemini_uploaded_object_json)
+        file_uri = gemini_uploaded_info.get('uri')
+        if not file_uri:
+            raise ValueError("Missing file URI in uploaded object")
 
-    generated_text = None
-    ai_error = None
-    uploaded_file_object = None
+        if not all([selected_class, selected_subject_id, question_count]):
+            return jsonify({'success': False, 'message': 'Missing class, subject, or question count.'}), 400
 
-    try:
-        # Read file content into memory
-        file_content = file.read()
+        try:
+            count = int(question_count)
+            if not 1 <= count <= 20:
+                raise ValueError("Invalid question count.")
+        except ValueError:
+            return jsonify({'success': False, 'message': 'Invalid number of questions specified (must be 1-20).'}), 400
 
-        # Prepare for AI Call
+
+        # Create a FileData object from the URI
+        uploaded_file_object = file_uri
+
         subject_name = get_subject_name(selected_subject_id)
         class_name = f"Class {selected_class}"
 
@@ -785,34 +806,12 @@ def generate_from_pdf():
             source_type='PDF document'
         )
 
-        print("\n--- Sending Prompt to Gemini ---")
-        print("-----------------------------\n")
-
-        # Upload file to Gemini API directly from memory using BytesIO
-        from io import BytesIO
-        print(f"Uploading file to Gemini: {filename}")
-        file_bytes = BytesIO(file_content)
-
-        # Use the BytesIO object as the file source
-        uploaded_file_object = genai.upload_file(
-            path=file_bytes,  # Pass BytesIO directly instead of path
-            display_name=filename,
-            mime_type='application/pdf'
-        )
-        print(
-            f"File uploaded successfully. Gemini File Name: {uploaded_file_object.name}, URI: {uploaded_file_object.uri}")
-
-        # Generate Content using google-generativeai library
-        model = genai.GenerativeModel(model_name="gemini-1.5-flash-latest")
-
-        print("Generating content...")
+        model = genai.GenerativeModel(model_name="gemini-2.0-flash")
         response = model.generate_content([prompt, uploaded_file_object])
 
-        print("\n--- Processing Gemini Response ---")
-
-        if response.parts:
+        if response.parts and response.text:
             generated_text = response.text
-            print("Successfully generated text from AI.")
+            return jsonify({'success': True, 'generated_text': generated_text})
         else:
             ai_error_reason = "Unknown reason"
             if response.prompt_feedback and response.prompt_feedback.block_reason:
@@ -827,45 +826,17 @@ def generate_from_pdf():
                         ai_error_reason += " (Potential issue)"
                 except (IndexError, AttributeError):
                     pass
-
-            print(f"AI generation failed or produced no text. Reason: {ai_error_reason}")
             ai_error = f"AI could not generate questions. Reason: {ai_error_reason}"
+            return jsonify({'success': False, 'message': ai_error}), 400
 
     except genai.types.generation_types.StopCandidateException as e:
-        print(f"AI Generation stopped unexpectedly: {e}")
         ai_error = f"AI generation stopped: {e}"
+        return jsonify({'success': False, 'message': ai_error}), 400
+    except json.JSONDecodeError:
+        return jsonify({'success': False, 'message': 'Invalid uploaded file information format'}), 400
     except Exception as e:
-        print(f"Error during AI processing or file handling: {type(e).__name__}: {e}")
-        import traceback
-        traceback.print_exc()
         ai_error = f'Error processing PDF or generating questions: {str(e)}'
-
-    finally:
-        # Delete the file from Gemini API storage if it was uploaded
-        if uploaded_file_object and hasattr(uploaded_file_object, 'name'):
-            try:
-                print(f"Attempting to delete uploaded file from Gemini: {uploaded_file_object.name}")
-                genai.delete_file(name=uploaded_file_object.name)
-                print(f"Successfully deleted Gemini file: {uploaded_file_object.name}")
-            except Exception as delete_err:
-                print(f"Warning: Failed to delete uploaded file {uploaded_file_object.name} from Gemini: {delete_err}")
-        elif uploaded_file_object:
-            print("Warning: uploaded_file_object exists but has no 'name' attribute for deletion.")
-
-    # Return result to frontend
-    if generated_text:
-        print("--- Returning Success to Frontend ---")
-        return jsonify({
-            'success': True,
-            'generated_text': generated_text
-        })
-    else:
-        print(f"--- Returning Failure to Frontend: {ai_error} ---")
-        return jsonify({
-            'success': False,
-            'message': ai_error or 'An unknown error occurred during AI generation.'
-        }), 500
-
+        return jsonify({'success': False, 'message': ai_error}), 500
 
 @teacher_bp.route('/save_imported_questions', methods=['POST'])
 @login_required(user_types=['teacher'])
@@ -889,7 +860,6 @@ def save_imported_questions():
 
     added_count = 0
     errors = []
-    print('hello')
     try:
         for question_data in questions_to_save:
             # Basic validation before saving
@@ -915,7 +885,6 @@ def save_imported_questions():
             else:
                 errors.append(f"Failed database save for question: {question_data.get('text', 'N/A')[:50]}...")
 
-        print('second')
         # Update teacher's count if successful adds and user is a teacher
         if added_count > 0 and user_type == 'teacher':
             try:
@@ -957,7 +926,4 @@ def save_imported_questions():
             })
 
     except Exception as e:
-        print(f"Error saving imported questions: {e}")
-        import traceback
-        traceback.print_exc()  # Print full traceback for debugging
         return jsonify({'success': False, 'message': f'An internal server error occurred: {str(e)}'}), 500
