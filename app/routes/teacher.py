@@ -650,6 +650,7 @@ if GEMINI_API_KEY:
     try:
         genai.configure(api_key=GEMINI_API_KEY)
     except Exception as config_err:
+        print(f"Error configuring Gemini API: {config_err}")
         # Handle configuration error appropriately
 else:
     print("Warning: GEMINI_API_KEY not found in environment variables. PDF generation will fail.")
