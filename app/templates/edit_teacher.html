@@ -1,0 +1,419 @@
+--- START OF FILE edit_teacher.html ---
+{% extends "menu.html" %}
+
+{% block title %}EduQuest - Edit Teacher{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4">Edit Teacher Details</h1>
+        <p class="lead">Update teacher information, classes, and subjects.</p>
+    </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
+
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Teacher Details for {{ teacher.name }}</h5>
+            </div>
+            <div class="card-body">
+                 {# Pass teacher data to JavaScript for pre-population #}
+                <script id="teacher-data" type="application/json">
+                    {{ teacher.classes_teached | tojson | safe }}
+                </script>
+
+                <form action="{{ url_for('admin.edit_teacher', teacher_uid=teacher.uid) }}" method="post" id="edit-teacher-form">
+                    <!-- Teacher Info -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="teacher_id" class="form-label">Teacher ID</label>
+                            <input type="text" class="form-control" id="teacher_id" name="teacher_id" value="{{ teacher.tchid }}" readonly disabled>
+                            <small class="form-text text-muted">Teacher ID cannot be changed.</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="teacher_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="teacher_name" name="teacher_name" value="{{ teacher.name }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="teacher_email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="teacher_email" name="teacher_email" value="{{ teacher.email }}" readonly disabled>
+                             <small class="form-text text-muted">Email address cannot be changed.</small>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="mobile_number" class="form-label">Mobile Number <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="mobile_number" name="mobile_number" value="{{ teacher.mobileno }}" required pattern="[0-9]{10}">
+                            <small class="form-text text-muted">10-digit mobile number.</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="active" {% if teacher.status == 'active' %}selected{% endif %}>Active</option>
+                                <option value="inactive" {% if teacher.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="password" name="password" minlength="6" placeholder="Leave blank to keep current password">
+                             <small class="form-text text-muted">Minimum 6 characters if changing.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" minlength="6" placeholder="Confirm new password">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Subject Assignments -->
+                    <h5 class="mb-3">Classes Taught <span class="text-danger">*</span></h5>
+                    <p class="text-muted small mb-3">Manage classes, sections, and subjects for this teacher.</p>
+
+                    <div id="classes-container">
+                        <!-- Class Block Template (Hidden) -->
+                        <div class="class-block border rounded p-3 mb-3" id="class-block-template" style="display: none;">
+                            <button type="button" class="btn btn-sm btn-outline-danger float-end remove-class" aria-label="Remove class">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Class</label>
+                                    <select class="form-select class-select" name="class_X" disabled required>
+                                        <option value="" selected>-- Select Class --</option>
+                                        {% for class_num in range(6, 13) %}
+                                        <option value="{{ class_num }}">Class {{ class_num }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="sections-container">
+                                <!-- Section blocks will be added here -->
+                            </div>
+                            <button type="button" class="btn btn-sm btn-outline-secondary mt-2 add-section-btn" disabled>
+                                <i class="fas fa-plus me-1"></i> Add Section
+                            </button>
+                        </div>
+
+                        <!-- Section Block Template (Hidden) -->
+                        <div class="section-block border-start border-4 ps-3 pt-2 pb-2 mb-2" id="section-block-template" style="display: none;">
+                             <button type="button" class="btn btn-sm btn-outline-danger float-end remove-section" aria-label="Remove section">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <div class="row mb-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">Section</label>
+                                    <input type="text" class="form-control section-input" name="section_X_Y" placeholder="e.g., A" disabled required>
+                                </div>
+                            </div>
+                            <div class="subjects-container">
+                                <div class="row mb-2">
+                                    <div class="col-md-12">
+                                        <label class="form-label">Subjects</label>
+                                        <select class="form-select subjects-select" name="subjects_X_Y" multiple disabled required>
+                                             {# Options populated by backend #}
+                                            {% if subjects %}
+                                                {% for subject_id, subject_data in subjects.items()|sort(attribute='1.name') %}
+                                                <option value="{{ subject_id }}">{{ subject_data.name }}</option>
+                                                {% endfor %}
+                                            {% else %}
+                                                 <option value="" disabled>No subjects available</option>
+                                            {% endif %}
+                                        </select>
+                                        <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple subjects.</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-secondary mt-2" id="add-class-btn">
+                        <i class="fas fa-plus me-1"></i> Add Class
+                    </button>
+
+                    <!-- Hidden fields to track structure -->
+                    <input type="hidden" id="class_count" name="class_count" value="0"> {# Value updated by JS #}
+
+                    <hr class="my-4">
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                           <i class="fas fa-save me-2"></i> Update Teacher
+                        </button>
+                         <a href="{{ url_for('admin.manage_teachers') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div> <!-- End card-body -->
+        </div> <!-- End card -->
+    </div> <!-- End col-12 -->
+</div> <!-- End row -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const classesContainer = document.getElementById('classes-container');
+    const classTemplate = document.getElementById('class-block-template');
+    const sectionTemplate = document.getElementById('section-block-template');
+    const addClassButton = document.getElementById('add-class-btn');
+    const classCountInput = document.getElementById('class_count');
+    let classCounter = 0; // Will track the number of VISIBLE class blocks
+
+    // --- Core Functions (Add Class, Add Section, Update Indices) - Mostly reused ---
+
+    function addClassBlock(prefillData = null) {
+        classCounter++; // Increment counter for unique IDs/Names
+
+        const clone = classTemplate.cloneNode(true);
+        clone.id = `class-block-${classCounter}`;
+        clone.style.display = 'block';
+
+        // --- Update class select ---
+        const classSelect = clone.querySelector('.class-select');
+        classSelect.name = `class_${classCounter}`;
+        classSelect.disabled = false;
+        classSelect.required = true;
+        if (prefillData && prefillData.classNum) {
+             classSelect.value = prefillData.classNum;
+        }
+
+        // --- Enable add section button ---
+        const addSectionBtn = clone.querySelector('.add-section-btn');
+        addSectionBtn.disabled = false;
+        addSectionBtn.dataset.classId = classCounter; // Use the running counter
+
+        // --- Event listener for add section button ---
+        addSectionBtn.addEventListener('click', function() {
+            const currentClassId = this.dataset.classId; // Use the ID assigned at creation
+            addSectionBlock(clone, currentClassId); // Pass parent block and its ID
+        });
+
+        // --- Event listener for remove class button ---
+        clone.querySelector('.remove-class').addEventListener('click', function() {
+            clone.remove();
+            // Renumbering after removal is complex and can cause issues with form data.
+            // Instead, we'll rely on the backend to correctly process numbered fields (class_1, class_3, etc.)
+            // Just update the visual count if needed, but the name attributes stay.
+            // updateClassIndices(); // Avoid re-indexing on remove for simplicity
+            updateClassCountInput(); // Update hidden count field
+        });
+
+        classesContainer.appendChild(clone);
+        updateClassCountInput(); // Update hidden count field
+
+        // --- If prefilling, add sections based on data ---
+        if (prefillData && prefillData.sections) {
+            Object.entries(prefillData.sections).forEach(([sectionName, subjectIds]) => {
+                 addSectionBlock(clone, classCounter, { sectionName: sectionName, subjectIds: subjectIds });
+            });
+        } else if (!prefillData) {
+            // If not prefilling (i.e., user clicked "Add Class"), add one empty section
+            addSectionBlock(clone, classCounter);
+        }
+
+
+        return clone; // Return the created class block element
+    }
+
+    function addSectionBlock(classBlock, classId, prefillData = null) {
+        const sectionsContainer = classBlock.querySelector('.sections-container');
+        // Section counter should be relative to the *current* state of the specific class block
+        const sectionCount = sectionsContainer.querySelectorAll('.section-block').length + 1;
+
+        const clone = sectionTemplate.cloneNode(true);
+        clone.id = `section-block-${classId}-${sectionCount}`; // Unique ID based on class ID and section count
+        clone.style.display = 'block';
+
+        // --- Update section input ---
+        const sectionInput = clone.querySelector('.section-input');
+        sectionInput.name = `section_${classId}_${sectionCount}`; // Name includes classId and sectionCount
+        sectionInput.disabled = false;
+        sectionInput.required = true;
+        if (prefillData && prefillData.sectionName) {
+            sectionInput.value = prefillData.sectionName;
+        }
+
+        // --- Update subjects select ---
+        const subjectsSelect = clone.querySelector('.subjects-select');
+        subjectsSelect.name = `subjects_${classId}_${sectionCount}`; // Name includes classId and sectionCount
+        subjectsSelect.disabled = false;
+        subjectsSelect.required = true;
+        if (prefillData && prefillData.subjectIds) {
+            Array.from(subjectsSelect.options).forEach(option => {
+                if (prefillData.subjectIds.includes(option.value)) {
+                    option.selected = true;
+                }
+            });
+        }
+
+        // --- Event listener for remove section button ---
+        clone.querySelector('.remove-section').addEventListener('click', function() {
+            // Prevent removing the last section within a class block
+            if (sectionsContainer.querySelectorAll('.section-block').length <= 1) {
+                alert("At least one section is required per class. Remove the class block if needed.");
+                return;
+            }
+            clone.remove();
+            // Renumber sections within this specific class block after removal
+             updateSectionIndices(classBlock, classId);
+        });
+
+        sectionsContainer.appendChild(clone);
+        return clone; // Return the created section block element
+    }
+
+     function updateClassCountInput() {
+        // Set the hidden input value to the highest class index number generated
+        // This ensures the backend loop runs enough times
+        classCountInput.value = classCounter;
+    }
+
+    function updateSectionIndices(classBlock, classId) {
+        const sectionBlocks = classBlock.querySelectorAll('.section-block');
+
+        sectionBlocks.forEach((block, index) => {
+            const currentNum = index + 1; // Re-index starting from 1
+            block.id = `section-block-${classId}-${currentNum}`; // Update ID
+
+            // Update section input name
+            const sectionInput = block.querySelector('.section-input');
+            sectionInput.name = `section_${classId}_${currentNum}`; // Update Name
+
+            // Update subjects select name
+            const subjectsSelect = block.querySelector('.subjects-select');
+            subjectsSelect.name = `subjects_${classId}_${currentNum}`; // Update Name
+        });
+    }
+
+    // --- Initialization for Edit Page ---
+    function initializeForm() {
+        const teacherDataElement = document.getElementById('teacher-data');
+        if (!teacherDataElement) {
+            console.error("Teacher data script tag not found!");
+            return;
+        }
+
+        let classesTaught;
+        try {
+            classesTaught = JSON.parse(teacherDataElement.textContent || '{}');
+        } catch (e) {
+            console.error("Error parsing teacher data JSON:", e);
+            classesTaught = {};
+        }
+
+        const classEntries = Object.entries(classesTaught);
+
+        if (classEntries.length > 0) {
+            classEntries.sort((a, b) => parseInt(a[0]) - parseInt(b[0])); // Sort classes numerically
+
+            classEntries.forEach(([classNum, classData]) => {
+                if (classData && classData.sections) {
+                     addClassBlock({ classNum: classNum, sections: classData.sections });
+                }
+            });
+        } else {
+            // If the teacher has no classes assigned, add one empty block
+            addClassBlock();
+        }
+
+         // Ensure classCounter reflects the number of initialized blocks
+        classCounter = classesContainer.querySelectorAll('.class-block:not(#class-block-template)').length;
+        updateClassCountInput();
+    }
+
+    // Initialize the form with existing data
+    initializeForm();
+
+    // Add event listener for the "Add Class" button AFTER initialization
+    addClassButton.addEventListener('click', () => addClassBlock()); // Pass no args to add empty
+
+    // --- Form Submission Validation ---
+    const form = document.getElementById('edit-teacher-form');
+    form.addEventListener('submit', function(event) {
+        // Password validation (only if new password is typed)
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+
+        if (password || confirmPassword) { // Check if user intended to change password
+            if (password !== confirmPassword) {
+                alert('New passwords do not match.');
+                event.preventDefault();
+                return false;
+            }
+            if (password.length < 6) {
+                alert('New password must be at least 6 characters long.');
+                event.preventDefault();
+                return false;
+            }
+        }
+
+        // Validate mobile number format
+        const mobileNumber = document.getElementById('mobile_number').value;
+        if (!mobileNumber.match(/^[0-9]{10}$/)) {
+            alert('Please enter a valid 10-digit mobile number.');
+            event.preventDefault();
+            return false;
+        }
+
+        // Make sure at least one class with one section and one subject is selected
+        const classBlocks = classesContainer.querySelectorAll('.class-block:not(#class-block-template)');
+        let validConfiguration = false;
+        let hasBlocks = false; // Track if any class blocks exist
+
+        classBlocks.forEach(classBlock => {
+            hasBlocks = true;
+            const classSelect = classBlock.querySelector('.class-select');
+            if (!classSelect || !classSelect.value) return; // Skip if class not selected
+
+            const sectionBlocks = classBlock.querySelectorAll('.section-block');
+            let classIsValid = false; // Check if *this* class block is valid
+
+            sectionBlocks.forEach(sectionBlock => {
+                const sectionInput = sectionBlock.querySelector('.section-input');
+                if (!sectionInput || !sectionInput.value.trim()) return; // Skip if section name is empty
+
+                const subjectsSelect = sectionBlock.querySelector('.subjects-select');
+                // A section is valid if it has a name AND at least one subject
+                if (subjectsSelect && subjectsSelect.selectedOptions.length > 0) {
+                    classIsValid = true; // Mark this class as having at least one valid section/subject combo
+                }
+            });
+
+            if(classIsValid) {
+                validConfiguration = true; // Mark the overall form as valid if at least one class is valid
+            }
+        });
+
+        // If there are blocks but none are valid, show error.
+        // If there are no blocks at all, show error.
+        if (hasBlocks && !validConfiguration) {
+            alert('Each added class must have at least one section with a name and at least one subject selected.');
+            event.preventDefault();
+            return false;
+        } else if (!hasBlocks) {
+             alert('Please add at least one class assignment for the teacher.');
+            event.preventDefault();
+            return false;
+        }
+
+         // If validation passes, the form will submit naturally.
+    });
+});
+
+</script>
+{% endblock %}

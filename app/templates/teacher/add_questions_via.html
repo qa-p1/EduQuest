@@ -325,6 +325,7 @@ d) Saturn</pre>
                   <input type="number" class="form-control" id="questionCountAI" min="1" max="20" value="5">
                 </div>
               </div>
+
             </div>
 
             <button class="btn btn-success" id="generateAIQuestions">
@@ -332,61 +333,27 @@ d) Saturn</pre>
             </button>
           </div>
 
-          <!-- YouTube Tab -->
           <div class="tab-pane fade" id="website">
             <div class="text-center mb-4">
               <i class="fa-solid fa-globe py-4" style="font-size: 60px"></i>
               <h4>Generate Questions from A Website</h4>
-              <p>Generate questions based on educational Website videos</p>
+              <p>Provide a public URL and let AI generate questions based on its content.</p>
             </div>
 
             <div class="mb-3 import-container">
-                <label for="websiteUrl" class="form-label"><i class="fas fa-globe me-1"></i> Generate from Website URL</label>
+                <label for="websiteUrl" class="form-label"><i class="fas fa-link me-1"></i> Website URL</label>
                 <div class="input-group">
-                    <input type="url" class="form-control" id="websiteUrl" placeholder="https://example.com/article">
-                    <button class="btn btn-primary" type="button" id="generateFromWebsiteBtn">
+                    <input type="url" class="form-control" id="websiteUrl" placeholder="https://example.com/article" required>
+                    <button class="btn btn-primary" type="button" id="generateFromWebsiteBtn"> <!-- Ensure this ID is used -->
                         <i class="fas fa-cogs me-1"></i> Generate Questions
                     </button>
                 </div>
-                <small class="form-text text-muted">Enter the full URL of the webpage containing the content.</small>
-                <!-- Optional: Add inputs for count/type specifically for URL if needed, or reuse general ones -->
-                <!-- Reuse #questionCountAI and #questionTypeAI for simplicity if desired -->
+                <small class="form-text text-muted">Enter the full URL (including http/https). The AI will attempt to access and analyze the page content. Ensure the page is publicly accessible.</small>
             </div>
 
-            <div class="video-preview mb-4 d-none" id="videoPreview">
-              <div class="ratio ratio-16x9 mb-3">
-                <iframe id="youtubeEmbed" src="" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-              </div>
-
-              <div class="video-info p-3 border rounded">
-                <h5 id="videoTitle">Video Title</h5>
-                <p class="text-white" id="videoDescription">Video description will appear here...</p>
-              </div>
-            </div>
-
-            <div class="youtube-options d-none" id="youtubeOptions">
-              <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="timeRange" class="form-label">Time Range (optional)</label>
-                    <input type="text" class="form-control" id="timeRange" placeholder="e.g. 2:30-10:45">
-                  </div>
-                </div>
-                <div class="col-md-6">
-                  <div class="form-group">
-                    <label for="youtubeQuestionCount" class="form-label">Number of Questions</label>
-                    <input type="number" class="form-control" id="youtubeQuestionCount" min="1" max="20" value="5">
-                  </div>
-                </div>
-              </div>
-
-              <button class="btn btn-danger" id="generateYoutubeQuestions">
-                <i class="fas fa-magic me-2"></i>Generate Questions from Video
-              </button>
             </div>
           </div>
         </div>
-      </div>
 
       <!-- Results Preview Section (initially hidden) -->
       <div class="questions-preview mt-4 d-none" id="questionsPreview">
@@ -416,12 +383,11 @@ d) Saturn</pre>
           </div>
         </div>
       </div>
-    <br>
+      </div>
 
 </div>
     </div>
-  </div>
-<div class="modal fade" id="viewQuestionModal" tabindex="-1" aria-labelledby="viewQuestionModalLabel" aria-hidden="true">
+    <div class="modal fade" id="viewQuestionModal" tabindex="-1" aria-labelledby="viewQuestionModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">

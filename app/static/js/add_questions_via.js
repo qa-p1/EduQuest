@@ -700,61 +700,170 @@ $(document).ready(function() { // Use jQuery's ready function
             }
         });
     } // End #extractPdfQuestions listener
-    $('#generateAIQuestions').on('click', function() {
-        confirmDiscardUnsavedChanges(() => {
-            const prompt = $('#aiPrompt').val()?.trim();
-            const difficulty = $('#difficultyLevel').val();
-            const questionType = $('#questionTypeAI').val();
-            const count = $('#questionCountAI').val();
-            const selectedClass = $classDropdown.val();
-            const selectedSubject = $subjectDropdown.val();
+   $('#generateAIQuestions').on('click', function() {
+    confirmDiscardUnsavedChanges(() => {
+        const promptText = $('#aiPrompt').val()?.trim(); // Get prompt text
+        const difficulty = $('#difficultyLevel').val();
+        const questionType = $('#questionTypeAI').val();
+        const countStr = $('#questionCountAI').val();
+        const selectedClass = $classDropdown.val();
+        const selectedSubject = $subjectDropdown.val();
 
-            if (!selectedClass || !selectedSubject) {
-                alert('Please select Class and Subject first.');
-                return;
-            }
-            if (!prompt) {
-                alert('Please enter a topic or prompt.');
-                return;
-            }
-            if (!count || count <= 0) {
-                alert('Please specify a valid number of questions.');
-                return;
-            }
+        if (!selectedClass || !selectedSubject) {
+            alert('Please select Class and Subject first.');
+            return;
+        }
+        if (!promptText) { // Check prompt text
+            alert('Please enter a topic or prompt.');
+            return;
+        }
+         if (promptText.length < 10) { // Basic length check
+            alert('Please enter a more detailed prompt (at least 10 characters).');
+            return;
+        }
+        const count = parseInt(countStr);
+        if (!count || count <= 0 || count > 20) { // Validate count
+            alert('Please specify a valid number of questions (1-20).');
+            return;
+        }
 
-            // TODO: Replace with actual AJAX call to AI generation backend
-            console.warn("Placeholder: Implement AJAX call for AI generation.");
+        showLoadingModal('Generating from Prompt...', 'AI is creating questions based on your input.');
+        updateLoadingProgress(10);
 
-            // Simulate
-            setTimeout(() => {
-                const sampleData = getSampleQuestions(parseInt(count), questionType, selectedClass, selectedSubject);
-                displayQuestions(sampleData, `Generated ${count} ${questionType} questions (Sample)`);
+        const formData = new FormData();
+        formData.append('class', selectedClass);
+        formData.append('subject_id', selectedSubject);
+        formData.append('question_count', count);
+        formData.append('question_type_pref', questionType);
+        formData.append('difficulty', difficulty);
+        formData.append('prompt_text', promptText); // Send the actual prompt text
+
+        $.ajax({
+            url: '/teacher/generate_from_prompt', // Use the new endpoint
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                updateLoadingProgress(90);
+                if (response.success && response.generated_text) {
+                    console.log("AI Generated Text (Prompt):\n", response.generated_text);
+                    const parsedQuestions = parsePastedText(response.generated_text, selectedClass, selectedSubject);
+                    updateLoadingProgress(100);
+
+                    if (parsedQuestions.length > 0) {
+                        // Optional: Add difficulty back if needed, though the AI was asked not to include it.
+                        // parsedQuestions.forEach(q => q.difficulty = difficulty); // Example
+                        displayQuestions(parsedQuestions, `AI generated ${parsedQuestions.length} question(s) from prompt`);
+                    } else {
+                        alert('AI generated a response, but no valid questions could be parsed. Check format/console log.');
+                        clearPreviewArea();
+                    }
+                    hideLoadingModal();
+                } else {
+                    alert('Error generating questions from prompt: ' + (response.message || 'Unknown server error.'));
+                    clearPreviewArea();
+                    hideLoadingModal();
+                }
+            },
+            error: function(xhr) {
                 hideLoadingModal();
-            }, 3000);
+                clearPreviewArea();
+                try {
+                    const response = JSON.parse(xhr.responseText);
+                    alert(`Prompt Generation Error (${xhr.status}): ${response.message || 'Server error.'}`);
+                } catch (e) {
+                    alert(`An unexpected error occurred while generating from prompt. Status: ${xhr.status}`);
+                }
+            }
         });
     });
+});
 
-    $('#generate_ques_from_website').on('click', function() {
-        confirmDiscardUnsavedChanges(() => {
-            const url = $('#websiteUrl').val()?.trim();
-            const count = $('#youtubeQuestionCount').val();
-            const selectedClass = $classDropdown.val();
-            const selectedSubject = $subjectDropdown.val();
+    // REMOVE the old $('#generate_ques_from_website').on('click', ...) listener
 
-            if (!selectedClass || !selectedSubject) {
-                alert('Please select Class and Subject first.');
-                return;
+// ADD Listener for the new Website URL Button
+$('#generateFromWebsiteBtn').on('click', function() { // Use the button ID from HTML
+    confirmDiscardUnsavedChanges(() => {
+        const url = $('#websiteUrl').val()?.trim();
+        const countStr = $('#questionCountAI').val(); // Reuse count input
+        const typePref = $('#questionTypeAI').val(); // Reuse type input
+        const selectedClass = $classDropdown.val();
+        const selectedSubject = $subjectDropdown.val();
+
+        if (!selectedClass || !selectedSubject) {
+            alert('Please select Class and Subject first.');
+            return;
+        }
+        if (!url) {
+            alert('Please enter a Website URL.');
+            return;
+        }
+        // Basic URL format check (optional but recommended)
+        try {
+            new URL(url); // Check if it's a valid URL structure
+        } catch (_) {
+            alert('Please enter a valid Website URL (e.g., https://example.com).');
+            return;
+        }
+        const count = parseInt(countStr);
+         if (!count || count <= 0 || count > 20) {
+            alert('Please specify a valid number of questions (1-20) using the input field.');
+            return;
+        }
+
+
+        showLoadingModal('Generating from Website...', `AI is analyzing ${url} and creating questions.`);
+        updateLoadingProgress(10);
+
+        const formData = new FormData();
+        formData.append('class', selectedClass);
+        formData.append('subject_id', selectedSubject);
+        formData.append('question_count', count);
+        formData.append('question_type_pref', typePref);
+        formData.append('website_url', url); // Send the URL
+
+        $.ajax({
+            url: '/teacher/generate_from_website', // Use the new endpoint
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                 updateLoadingProgress(90);
+                if (response.success && response.generated_text) {
+                    console.log("AI Generated Text (Website):\n", response.generated_text);
+                    const parsedQuestions = parsePastedText(response.generated_text, selectedClass, selectedSubject);
+                    updateLoadingProgress(100);
+
+                    if (parsedQuestions.length > 0) {
+                        displayQuestions(parsedQuestions, `AI generated ${parsedQuestions.length} question(s) from website`);
+                    } else {
+                        alert('AI generated a response, but no valid questions could be parsed. Check format/console log.');
+                        clearPreviewArea();
+                    }
+                    hideLoadingModal();
+                } else {
+                    alert('Error generating questions from website: ' + (response.message || 'Unknown server error.'));
+                    clearPreviewArea();
+                    hideLoadingModal();
+                }
+            },
+            error: function(xhr) {
+                hideLoadingModal();
+                clearPreviewArea();
+                 try {
+                    const response = JSON.parse(xhr.responseText);
+                    alert(`Website Generation Error (${xhr.status}): ${response.message || 'Server error.'}`);
+                } catch (e) {
+                    alert(`An unexpected error occurred while generating from website. Status: ${xhr.status}`);
+                }
             }
-            if (!count || count <= 0) {
-                alert('Please specify a valid number of questions.');
-                return;
-            }
-
-
-
-            console.warn("Placeholder: Implement AJAX call for YouTube processing.");
         });
     });
+});
+
+// Make sure the old YouTube-specific listeners (like youtubeUrl change) are removed if they exist.
 
 
     // --- Example Modal & Template Download ---

@@ -1,0 +1,335 @@
+{% extends "menu.html" %}
+
+{% block title %}EduQuest - Add Teacher{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4">Add New Teacher</h1>
+        <p class="lead">Register a new teacher and assign their subjects and classes.</p>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Teacher Details</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('admin.add_teacher') }}" method="post" id="add-teacher-form">
+                    <!-- Teacher Info -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="teacher_id" class="form-label">Teacher ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="teacher_id" name="teacher_id" required>
+                            <small class="form-text text-muted">Unique identifier for the teacher.</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="teacher_name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="teacher_name" name="teacher_name" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="teacher_email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="teacher_email" name="teacher_email" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="mobile_number" class="form-label">Mobile Number <span class="text-danger">*</span></label>
+                            <input type="tel" class="form-control" id="mobile_number" name="mobile_number" required pattern="[0-9]{10}">
+                            <small class="form-text text-muted">10-digit mobile number.</small>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">Status <span class="text-danger">*</span></label>
+                            <select class="form-select" id="status" name="status" required>
+                                <option value="active" selected>Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                             <small class="form-text text-muted">Minimum 6 characters.</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="confirm_password" class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="6">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+<!-- Subject Assignments -->
+<h5 class="mb-3">Classes Taught <span class="text-danger">*</span></h5>
+<p class="text-muted small mb-3">Add classes, sections, and subjects for this teacher.</p>
+
+<div id="classes-container">
+    <!-- Class Block Template -->
+    <div class="class-block border rounded p-3 mb-3" id="class-block-template" style="display: none;">
+        <button type="button" class="btn btn-sm btn-outline-danger float-end remove-class" aria-label="Remove class">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label">Class</label>
+                <select class="form-select class-select" name="class_X" disabled>
+                    <option value="" selected>-- Select Class --</option>
+                    {% for class_num in range(6, 13) %}
+                    <option value="{{ class_num }}">Class {{ class_num }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="sections-container">
+            <!-- Section blocks will be added here -->
+        </div>
+        <button type="button" class="btn btn-sm btn-outline-secondary mt-2 add-section-btn" disabled>
+            <i class="fas fa-plus me-1"></i> Add Section
+        </button>
+    </div>
+
+    <!-- Section Block Template -->
+    <div class="section-block border-start border-4 ps-3 pt-2 pb-2 mb-2" id="section-block-template" style="display: none;">
+        <button type="button" class="btn btn-sm btn-outline-danger float-end remove-section" aria-label="Remove section">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="row mb-2">
+            <div class="col-md-4">
+                <label class="form-label">Section</label>
+                <input type="text" class="form-control section-input" name="section_X_Y" placeholder="e.g., A" disabled>
+            </div>
+        </div>
+        <div class="subjects-container">
+            <div class="row mb-2">
+                <div class="col-md-12">
+                    <label class="form-label">Subjects</label>
+                    <select class="form-select subjects-select" name="subjects_X_Y" multiple disabled>
+                        {% for subject_id, subject_data in subjects.items() %}
+                        <option value="{{ subject_id }}">{{ subject_data.name }}</option>
+                        {% endfor %}
+                    </select>
+                    <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple subjects.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button type="button" class="btn btn-outline-secondary mt-2" id="add-class-btn">
+    <i class="fas fa-plus me-1"></i> Add Class
+</button>
+
+<!-- Hidden fields to track structure -->
+<input type="hidden" id="class_count" name="class_count" value="0">
+
+                    <hr class="my-4">
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                           <i class="fas fa-user-plus me-2"></i> Add Teacher
+                        </button>
+                         <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div> <!-- End card-body -->
+        </div> <!-- End card -->
+    </div> <!-- End col-12 -->
+</div> <!-- End row -->
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const classesContainer = document.getElementById('classes-container');
+    const classTemplate = document.getElementById('class-block-template');
+    const sectionTemplate = document.getElementById('section-block-template');
+    const addClassButton = document.getElementById('add-class-btn');
+    const classCountInput = document.getElementById('class_count');
+    let classCounter = 0;
+
+    function addClassBlock() {
+        classCounter++;
+        classCountInput.value = classCounter;
+
+        const clone = classTemplate.cloneNode(true);
+        clone.id = `class-block-${classCounter}`;
+        clone.style.display = 'block';
+
+        // Update class select
+        const classSelect = clone.querySelector('.class-select');
+        classSelect.name = `class_${classCounter}`;
+        classSelect.disabled = false;
+        classSelect.required = true;
+
+        // Enable add section button
+        const addSectionBtn = clone.querySelector('.add-section-btn');
+        addSectionBtn.disabled = false;
+        addSectionBtn.dataset.classId = classCounter;
+
+        // Add event listener for add section button
+        addSectionBtn.addEventListener('click', function() {
+            const classId = this.dataset.classId;
+            addSectionBlock(clone, classId);
+        });
+
+        // Add event listener for remove class button
+        clone.querySelector('.remove-class').addEventListener('click', function() {
+            clone.remove();
+            updateClassCount();
+        });
+
+        classesContainer.appendChild(clone);
+
+        // Add the first section automatically
+        addSectionBlock(clone, classCounter);
+
+        return clone;
+    }
+
+    function addSectionBlock(classBlock, classId) {
+        const sectionsContainer = classBlock.querySelector('.sections-container');
+        const sectionCount = sectionsContainer.querySelectorAll('.section-block').length + 1;
+
+        const clone = sectionTemplate.cloneNode(true);
+        clone.id = `section-block-${classId}-${sectionCount}`;
+        clone.style.display = 'block';
+
+        // Update section input
+        const sectionInput = clone.querySelector('.section-input');
+        sectionInput.name = `section_${classId}_${sectionCount}`;
+        sectionInput.disabled = false;
+        sectionInput.required = true;
+
+        // Update subjects select
+        const subjectsSelect = clone.querySelector('.subjects-select');
+        subjectsSelect.name = `subjects_${classId}_${sectionCount}`;
+        subjectsSelect.disabled = false;
+        subjectsSelect.required = true;
+
+        // Add event listener for remove section button
+        clone.querySelector('.remove-section').addEventListener('click', function() {
+            if (sectionsContainer.querySelectorAll('.section-block').length <= 1) {
+                alert("At least one section is required per class.");
+                return;
+            }
+            clone.remove();
+            updateSectionIndices(classBlock);
+        });
+
+        sectionsContainer.appendChild(clone);
+        return clone;
+    }
+
+    function updateClassCount() {
+        const classBlocks = classesContainer.querySelectorAll('.class-block:not(#class-block-template)');
+        classCounter = classBlocks.length;
+        classCountInput.value = classCounter;
+
+        // Re-index class blocks
+        classBlocks.forEach((block, index) => {
+            const currentNum = index + 1;
+            block.id = `class-block-${currentNum}`;
+
+            // Update class select name
+            const classSelect = block.querySelector('.class-select');
+            classSelect.name = `class_${currentNum}`;
+
+            // Update add section button data-class-id
+            const addSectionBtn = block.querySelector('.add-section-btn');
+            addSectionBtn.dataset.classId = currentNum;
+
+            // Update section blocks within this class
+            updateSectionIndices(block, currentNum);
+        });
+    }
+
+    function updateSectionIndices(classBlock, newClassId = null) {
+        const classId = newClassId || classBlock.id.split('-').pop();
+        const sectionBlocks = classBlock.querySelectorAll('.section-block');
+
+        sectionBlocks.forEach((block, index) => {
+            const currentNum = index + 1;
+            block.id = `section-block-${classId}-${currentNum}`;
+
+            // Update section input name
+            const sectionInput = block.querySelector('.section-input');
+            sectionInput.name = `section_${classId}_${currentNum}`;
+
+            // Update subjects select name
+            const subjectsSelect = block.querySelector('.subjects-select');
+            subjectsSelect.name = `subjects_${classId}_${currentNum}`;
+        });
+    }
+
+    // Add the first class block automatically
+    addClassBlock();
+
+    // Add new class block when button is clicked
+    addClassButton.addEventListener('click', addClassBlock);
+
+    // Handle form submission validation
+    const form = document.getElementById('add-teacher-form');
+    form.addEventListener('submit', function(event) {
+        // Password validation
+        const password = document.getElementById('password').value;
+        const confirmPassword = document.getElementById('confirm_password').value;
+        if (password !== confirmPassword) {
+            alert('Passwords do not match.');
+            event.preventDefault();
+            return false;
+        }
+        if (password.length < 6) {
+            alert('Password must be at least 6 characters long.');
+            event.preventDefault();
+            return false;
+        }
+
+        // Validate Teacher ID format
+        const teacherId = document.getElementById('teacher_id').value;
+        if (!teacherId || teacherId.trim() === '') {
+            alert('Teacher ID is required.');
+            event.preventDefault();
+            return false;
+        }
+
+        // Validate mobile number
+        const mobileNumber = document.getElementById('mobile_number').value;
+        if (!mobileNumber.match(/^[0-9]{10}$/)) {
+            alert('Please enter a valid 10-digit mobile number.');
+            event.preventDefault();
+            return false;
+        }
+
+        // Make sure at least one class with one section and one subject is selected
+        const classBlocks = classesContainer.querySelectorAll('.class-block:not(#class-block-template)');
+        let validConfiguration = false;
+
+        classBlocks.forEach(classBlock => {
+            const classValue = classBlock.querySelector('.class-select').value;
+            if (!classValue) return;
+
+            const sectionBlocks = classBlock.querySelectorAll('.section-block');
+            sectionBlocks.forEach(sectionBlock => {
+                const sectionValue = sectionBlock.querySelector('.section-input').value;
+                if (!sectionValue) return;
+
+                const subjectsSelect = sectionBlock.querySelector('.subjects-select');
+                if (subjectsSelect.selectedOptions.length > 0) {
+                    validConfiguration = true;
+                }
+            });
+        });
+
+        if (!validConfiguration) {
+            alert('Please add at least one class with one section and at least one subject selected.');
+            event.preventDefault();
+            return false;
+        }
+    });
+});
+
+</script>
+{% endblock %}

@@ -55,7 +55,7 @@ def login():
 def logout():
     session.clear()
     flash("You have been logged out successfully.", 'primary')
-    return redirect(url_for('auth.index'))
+    return redirect(url_for('auth.login'))
 
 
 @auth_bp.route('/')

@@ -17,6 +17,7 @@ from app.models.teacher_services import (
 )
 import google.generativeai as genai
 from io import BytesIO
+
 teacher_bp = Blueprint('teacher', __name__, url_prefix='/teacher')
 import os
 from dotenv import load_dotenv
@@ -610,7 +611,6 @@ def upload_spreadsheet():
 def process_question_row(row):
     """Helper function to process each question row"""
 
-
     question = {
         'question_type': row['Question Type'],
         'text': row['Question Text'],
@@ -645,6 +645,7 @@ def process_question_row(row):
 
     return question
 
+
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 if GEMINI_API_KEY:
     try:
@@ -657,9 +658,27 @@ else:
 
 
 # --- Helper Function for AI Prompt ---
-def create_ai_prompt(class_name, subject_name, count, type_preference='mcq', source_type='PDF content'):
-    """Creates a standardized prompt for Gemini question generation."""
-        # (Keep the implementation of create_ai_prompt exactly as it was in the previous correct version)
+def create_ai_prompt(class_name, subject_name, count, source_type, type_preference='mcq', source_detail=None):
+    """
+    Creates a standardized prompt for Gemini question generation, adapting
+    based on the source material type.
+
+    Args:
+        class_name (str): The target class (e.g., "Class 9").
+        subject_name (str): The subject (e.g., "Physics").
+        count (int): The number of questions to generate.
+        source_type (str): Describes the source of the content.
+                           Expected values (case-insensitive): 'pdf', 'website', 'prompt', 'topic'.
+                           Other values will use a generic phrasing.
+        type_preference (str, optional): Preferred question type ('mcq', 'true_false',
+                                         'fill_in_blanks', 'mixed'). Defaults to 'mcq'.
+        source_detail (str, optional): Specific URL or prompt text to include directly
+                                       in the source description.
+
+    Returns:
+        str: The formatted prompt string for the AI model.
+    """
+    # --- Determine Type Instruction ---
     type_instruction = ""
     if type_preference == 'mcq':
         type_instruction = "Generate Multiple Choice Questions (MCQ)."
@@ -670,52 +689,75 @@ def create_ai_prompt(class_name, subject_name, count, type_preference='mcq', sou
     elif type_preference == 'mixed':
         type_instruction = "Generate a mix of question types (MCQ, True/False, Fill in the Blanks)."
     else:
-        type_instruction = f"Generate {type_preference} questions."  # Default fallback
+        type_instruction = f"Generate {type_preference} questions." # Default fallback
 
+    # --- Determine Source-Specific Wording ---
+    source_type_lower = source_type.lower()
+    source_description = ""
+    task_focus = ""
+    generation_basis = "" # How to refer back to the source at the end
+
+    if source_type_lower == 'pdf':
+        # For PDF, we still rely on the uploaded file object passed separately
+        source_description = "Content from the provided PDF document (passed separately)."
+        task_focus = "Critically analyze the source material"
+        generation_basis = "provided PDF file content"
+    elif source_type_lower == 'website':
+        url_display = f"the following website URL: {source_detail}" if source_detail else "the provided Website URL"
+        source_description = f"Content accessible at {url_display}."
+        task_focus = f"Critically analyze the content from the website"
+        generation_basis = "provided website content"
+    elif source_type_lower in ['prompt', 'topic']:
+        prompt_display = f": '{source_detail}'" if source_detail else "(provided separately)"
+        source_description = f"The user-provided topic/prompt{prompt_display}."
+        task_focus = f"Based on the user's {source_type_lower}"
+        generation_basis = f"user's provided {source_type_lower}"
+    else: # Generic fallback
+        source_description = f"Content from the provided source ({source_type})."
+        task_focus = "Based on the provided source material"
+        generation_basis = "provided source material"
+
+    # --- Define Constant Output Format Instructions ---
     output_format_instruction = f"""
-**Output Format Requirements:**
-- Provide EXACTLY {count} questions based on the provided {source_type}.
-- Number each question sequentially starting from 1.
-- Follow the specific format for EACH question type precisely:
+    **Output Format Requirements:**
+    - Provide EXACTLY {count} questions based on the {generation_basis}.
+    - Number each question sequentially starting from 1.
+    - Follow the specific format for EACH question type precisely:
 
-*For Multiple Choice (MCQ):*
-NUMBER. Question text?
-a) Option A text
-b) Option B text
-c) Correct Option C text *
-d) Option D text
-(Use letters a, b, c, d. Mark the single correct answer CLEARLY with an asterisk * at the VERY END of the correct option line, AFTER the text.)
+    *For Multiple Choice (MCQ):*
+    NUMBER. Question text?
+    a) Option A text
+    b) Option B text
+    c) Correct Option C text *
+    d) Option D text
+    (Use letters a, b, c, d. Mark the single correct answer CLEARLY with an asterisk * at the VERY END of the correct option line, AFTER the text.)
 
-*For True/False:*
-NUMBER. Statement text?
-a) True *
-b) False
-(OR use 'a) True' and 'b) False *' if False is correct. Mark the correct one with *.)
+    *For True/False:*
+    NUMBER. Statement text?
+    a) True *
+    b) False
+    (OR use 'a) True' and 'b) False *' if False is correct. Mark the correct one with *.)
 
-*For Fill in the Blanks (FITB):*
-NUMBER. Question text with one or more [blank] placeholders.
-Answer: Correct word/phrase for the first blank
-Answer: Correct word/phrase for the second blank (if applicable)
-(Use exactly '[blank]' for placeholders. Provide one 'Answer:' line for EACH blank.)
+    *For Fill in the Blanks (FITB):*
+    NUMBER. Question text with one or more [blank] placeholders.
+    Answer: Correct word/phrase for the first blank
+    Answer: Correct word/phrase for the second blank (if applicable)
+    (Use exactly '[blank]' for placeholders. Provide one 'Answer:' line for EACH blank.)
 
-- Ensure a SINGLE blank line separates each complete question block (question text, options/answers).
-- Do NOT include any introductory text, concluding remarks, commentary, difficulty labels, or marks within the output. Only provide the formatted questions.
-"""
-
+    - Ensure a SINGLE blank line separates each complete question block (question text, options/answers).
+    - Do NOT include any introductory text, concluding remarks, commentary, difficulty labels, or marks within the output. Only provide the formatted questions.
+    """
     full_prompt = f"""
-You are an expert question generator creating educational content.
-Class: {class_name}
-Subject: {subject_name}
-Source Material: Content from the provided {source_type}.
-Number of Questions to Generate: {count}
-Task: {type_instruction} Critically analyze the source material to create relevant and accurate questions.
-
-{output_format_instruction}
-
-Generate the questions now based *only* on the provided file content:
-"""
+    You are an expert question generator creating educational content.
+    Class: {class_name}
+    Subject: {subject_name}
+    Source Material: {source_description}
+    Number of Questions to Generate: {count}
+    Task: {type_instruction} {task_focus} to create relevant and accurate questions.
+    {output_format_instruction}
+    Generate the questions now based only on the {generation_basis}:
+    """
     return full_prompt.strip()
-
 
 @teacher_bp.route('/upload_pdf', methods=['POST'])
 @login_required(user_types=['teacher'])
@@ -762,7 +804,6 @@ def upload_pdf_gemini():
 @teacher_bp.route('/generate_from_pdf', methods=['POST'])
 @login_required(user_types=['teacher'])
 def generate_from_pdf():
-
     if not GEMINI_API_KEY:
         return jsonify({'success': False, 'message': 'AI Generation is not configured on the server.'}), 503
 
@@ -792,7 +833,6 @@ def generate_from_pdf():
         except ValueError:
             return jsonify({'success': False, 'message': 'Invalid number of questions specified (must be 1-20).'}), 400
 
-
         # Create a FileData object from the URI
         uploaded_file_object = file_uri
 
@@ -804,7 +844,7 @@ def generate_from_pdf():
             subject_name=subject_name,
             count=count,
             type_preference=question_type_pref,
-            source_type='PDF document'
+            source_type='pdf'
         )
 
         model = genai.GenerativeModel(model_name="gemini-2.0-flash")
@@ -837,6 +877,157 @@ def generate_from_pdf():
         return jsonify({'success': False, 'message': 'Invalid uploaded file information format'}), 400
     except Exception as e:
         ai_error = f'Error processing PDF or generating questions: {str(e)}'
+        return jsonify({'success': False, 'message': ai_error}), 500
+
+
+@teacher_bp.route('/generate_from_prompt', methods=['POST'])
+@login_required(user_types=['teacher'])
+def generate_from_prompt():
+    if not GEMINI_API_KEY:
+        return jsonify({'success': False, 'message': 'AI Generation is not configured on the server.'}), 503
+
+    # Input validation
+    selected_class = request.form.get('class')
+    selected_subject_id = request.form.get('subject_id')
+    question_count_str = request.form.get('question_count', '5')
+    question_type_pref = request.form.get('question_type_pref', 'mcq')
+    difficulty = request.form.get('difficulty', 'medium')  # Get difficulty
+    user_prompt_text = request.form.get('prompt_text')
+
+    if not all([selected_class, selected_subject_id, question_count_str, user_prompt_text]):
+        return jsonify({'success': False, 'message': 'Missing class, subject, question count, or prompt text.'}), 400
+
+    if len(user_prompt_text.strip()) < 10:  # Basic check for prompt length
+        return jsonify({'success': False, 'message': 'Prompt text is too short.'}), 400
+
+    try:
+        count = int(question_count_str)
+        if not 1 <= count <= 20:
+            raise ValueError("Invalid question count.")
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Invalid number of questions specified (must be 1-20).'}), 400
+
+    try:
+        subject_name = get_subject_name(selected_subject_id)
+        class_name = f"Class {selected_class}"
+
+        # Create the system prompt using the helper
+        system_prompt = create_ai_prompt(
+            class_name=class_name,
+            subject_name=subject_name,
+            count=count,
+            source_type='prompt',  # Specify source type
+            type_preference=question_type_pref,
+            source_detail=user_prompt_text
+        )
+
+        model = genai.GenerativeModel(model_name="gemini-2.0-flash") # Or your preferred model
+
+        # Pass the system prompt AND the user's prompt as separate parts
+        # Including difficulty in the user prompt part might help guide the AI
+        combined_user_input = f"User Prompt: {user_prompt_text}\nDesired Difficulty: {difficulty}"
+
+        response = model.generate_content([system_prompt, combined_user_input])
+
+        if response.parts and response.text:
+            generated_text = response.text
+            return jsonify({'success': True, 'generated_text': generated_text})
+        else:
+            ai_error_reason = "Unknown reason"
+            if response.prompt_feedback and response.prompt_feedback.block_reason:
+                ai_error_reason = f"Blocked due to: {response.prompt_feedback.block_reason_message or response.prompt_feedback.block_reason}"
+            elif not response.candidates:
+                ai_error_reason = "No candidates generated (check prompt or model capabilities)"
+            else:
+                try:
+                    finish_reason = response.candidates[0].finish_reason
+                    ai_error_reason = f"Finished with reason: {finish_reason}"
+                    if finish_reason != genai.types.Candidate.FinishReason.STOP:
+                        ai_error_reason += " (Potential issue)"
+                except (IndexError, AttributeError):
+                    pass
+            ai_error = f"AI could not generate questions. Reason: {ai_error_reason}"
+            return jsonify({'success': False, 'message': ai_error}), 400
+
+    except genai.types.generation_types.StopCandidateException as e:
+        ai_error = f"AI generation stopped: {e}"
+        return jsonify({'success': False, 'message': ai_error}), 400
+    except Exception as e:
+        ai_error = f'Error processing prompt or generating questions: {str(e)}'
+        return jsonify({'success': False, 'message': ai_error}), 500
+
+@teacher_bp.route('/generate_from_website', methods=['POST'])
+@login_required(user_types=['teacher'])
+def generate_from_website():
+    if not GEMINI_API_KEY:
+        return jsonify({'success': False, 'message': 'AI Generation is not configured on the server.'}), 503
+
+    # Input validation
+    selected_class = request.form.get('class')
+    selected_subject_id = request.form.get('subject_id')
+    question_count_str = request.form.get('question_count', '5') # Reuse AI count input
+    question_type_pref = request.form.get('question_type_pref', 'mcq') # Reuse AI type input
+    website_url = request.form.get('website_url')
+
+    if not all([selected_class, selected_subject_id, question_count_str, website_url]):
+        return jsonify({'success': False, 'message': 'Missing class, subject, question count, or website URL.'}), 400
+
+    # Basic URL validation (can be improved)
+    if not (website_url.startswith('http://') or website_url.startswith('https://')):
+         return jsonify({'success': False, 'message': 'Invalid website URL format.'}), 400
+
+    try:
+        count = int(question_count_str)
+        if not 1 <= count <= 20:
+            raise ValueError("Invalid question count.")
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Invalid number of questions specified (must be 1-20).'}), 400
+
+    try:
+        subject_name = get_subject_name(selected_subject_id)
+        class_name = f"Class {selected_class}"
+
+        # Create the system prompt describing the task and format
+        system_prompt = create_ai_prompt(
+            class_name=class_name,
+            subject_name=subject_name,
+            count=count,
+            source_type='website', # Specify source type
+            type_preference=question_type_pref,
+            source_detail=website_url # Include the URL in the description
+        )
+
+        model = genai.GenerativeModel(model_name="gemini-2.0-flash")# Or your preferred model
+
+        response = model.generate_content([system_prompt])
+
+        if response.parts and response.text:
+            generated_text = response.text
+            return jsonify({'success': True, 'generated_text': generated_text})
+        else:
+            ai_error_reason = "Unknown reason"
+            if response.prompt_feedback and response.prompt_feedback.block_reason:
+                ai_error_reason = f"Blocked due to: {response.prompt_feedback.block_reason_message or response.prompt_feedback.block_reason}"
+            elif not response.candidates:
+                ai_error_reason = "No candidates generated (check prompt or model capabilities)"
+            else:
+                try:
+                    finish_reason = response.candidates[0].finish_reason
+                    ai_error_reason = f"Finished with reason: {finish_reason}"
+                    if finish_reason != genai.types.Candidate.FinishReason.STOP:
+                        ai_error_reason += " (Potential issue)"
+                except (IndexError, AttributeError):
+                    pass
+            ai_error = f"AI could not generate questions. Reason: {ai_error_reason}"
+            return jsonify({'success': False, 'message': ai_error}), 400
+
+    except genai.types.generation_types.StopCandidateException as e:
+         ai_error = f"AI generation stopped: {e}"
+         return jsonify({'success': False, 'message': ai_error}), 400
+    except Exception as e:
+        ai_error = f'Error processing website URL or generating questions: {str(e)}'
+        # Log the actual error for debugging
+        print(f"Error in /generate_from_website: {e}")
         return jsonify({'success': False, 'message': ai_error}), 500
 
 @teacher_bp.route('/save_imported_questions', methods=['POST'])

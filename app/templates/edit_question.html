@@ -88,10 +88,10 @@
                         <label for="correct_answer" class="form-label">Correct Answer</label>
                         <select class="form-select" id="correct_answer" name="correct_answer" required>
                             <option value="" disabled>Select correct option</option>
-                            <option value="1" {% if question.correct_answer == "1" %}selected{% endif %}>Option 1</option>
-                            <option value="2" {% if question.correct_answer == "2" %}selected{% endif %}>Option 2</option>
-                            <option value="3" {% if question.correct_answer == "3" %}selected{% endif %}>Option 3</option>
-                            <option value="4" {% if question.correct_answer == "4" %}selected{% endif %}>Option 4</option>
+                            <option value="1" {% if question.correct_answer == 0 %}selected{% endif %}>Option 1</option>
+                            <option value="2" {% if question.correct_answer == 1 %}selected{% endif %}>Option 2</option>
+                            <option value="3" {% if question.correct_answer == 2 %}selected{% endif %}>Option 3</option>
+                            <option value="4" {% if question.correct_answer == 3 %}selected{% endif %}>Option 4</option>
                         </select>
                     </div>
                 </div>
