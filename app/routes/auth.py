@@ -36,8 +36,6 @@ def login():
                 session['menu_items'] = get_menu_items(user_type)
                 if user_data['user_type'] == 'teacher':
                     session['subjects'] = get_all_subjects(user_data['user_id'])
-                else:
-                    session['subjects'] = get_all_subjects()
 
                 return redirect(url_for('common.dashboard'))
 
