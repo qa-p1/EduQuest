@@ -28,7 +28,7 @@ def add_subject():
                 add_new_subject(subject_name)
                 flash(f"Subject '{subject_name}' added successfully!", 'primary')
                 # Refresh subjects in session after adding
-                session['subjects'] = get_all_subjects()
+                session['subjects'] = dict(get_all_subjects())
             except Exception as e:
                 flash(f"Error adding subject: {e}", 'danger')
             # Redirect to GET to prevent form resubmission
