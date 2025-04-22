@@ -31,17 +31,17 @@
                         </thead>
                         <tbody>
                             {% if subjects %}
-                                {% for subject in subjects %}
+                                {% for subject_id, subject in subjects.items() %}
                                 <tr>
                                     <td>{{ loop.index }}</td>
-                                    <td id="subject-name-{{ subject.id }}">{{ subject.name }}</td>
+                                    <td id="subject-name-{{ subject_id }}">{{ subject.name }}</td>
                                     <td>
-                                        <button onclick="startEdit('{{ subject.id }}')" class="btn btn-sm btn-primary">
+                                        <button onclick="startEdit('{{ subject_id }}')" class="btn btn-sm btn-primary">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <a href="{{ url_for('admin.delete_subject', subject_id=subject.id) }}"
-                                        class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Are you sure you want to delete this subject?')">
+                                        <a href="{{ url_for('admin.delete_subject', subject_id=subject_id) }}"
+                                           class="btn btn-sm btn-danger"
+                                           onclick="return confirm('Are you sure you want to delete this subject?')">
                                             <i class="fas fa-trash"></i>
                                         </a>
                                     </td>

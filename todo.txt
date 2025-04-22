@@ -1,4 +1,7 @@
+Now we are finalizing the project now i am going to go over everything in detail starting from tomorrow and fix everything with the code such as cleaning up the code make it standard and increase reusability fix small issues remaining and things
+while we do that these are major things that we are going to take care of
+add more options questions type (true false all over the app and rest of remaining options in AI and spreadsheet all of that) and also filter options for teacher
+complete the take quiz page and make work
+implement more the functions in admin as we go on features such as add students and everything
+(important pages to be fixed generate exam, add question, dashboard implementation and optimization increasing reusability in everything
 
-make the quiz page for students where they will show exam if the exam is enabled by the teacher and is of their class and they can take that exam if the teacher marks them as active in the database
-inside quiz page enable proper quiz taking functionality with not be able to exit the exam until completed or reset it with submission linked to it when the student submit the exam it will go into that exam's
-submission's page where the submission will be stored by their id and hence marked respectively and everything else be managed
