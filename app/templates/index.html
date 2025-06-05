@@ -117,6 +117,11 @@
             background-color: var(--card-bg-hover);
         }
 
+        /* Mobile touch feedback */
+        .role-icon.activated:active {
+            background-color: var(--primary-color);
+            transform: scale(0.95);
+        }
 
         .student-icon {
             top: 50%;
@@ -178,7 +183,9 @@
         .hover-area.active ~ .icon-container .admin-icon {
             opacity: 1;
             transform: translate(calc(-45% - 140px), calc(-20% + 100px)) scale(1);
-        }/* Add specific hover classes that ADD to the transform rather than replace it */
+        }
+
+        /* Add specific hover classes that ADD to the transform rather than replace it */
         .hover-area.active ~ .icon-container .student-icon.activated:hover {
             background: #3a56d4;
         }
@@ -195,9 +202,10 @@
             position: absolute;
             background-color: var(--primary-color);
             border-radius: 50%;
-            opacity: 0.3;/* Ensure particles don't interfere with clicks */
+            opacity: 0.3;
         }
 
+        /* Mobile-specific adjustments */
         @media (max-width: 768px) {
             .title {
                 font-size: 2.5rem;
@@ -223,12 +231,59 @@
             .hover-area.active ~ .icon-container .admin-icon {
                 transform: translate(calc(-50% - 110px), calc(-50% + 90px)) scale(1);
             }
+
+            /* Mobile: disable hover effects, use only touch */
+            .role-icon.activated:hover {
+                background-color: var(--card-bg);
+            }
+        }
+
+        /* Close button for mobile */
+        .close-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--card-bg);
+            border: none;
+            color: var(--dark-color);
+            font-size: 20px;
+            cursor: pointer;
+            display: none;
+            z-index: 5;
+            transition: all 0.3s ease;
+        }
+
+        .close-button:hover {
+            background-color: var(--card-bg-hover);
+        }
+
+        .close-button:active {
+            background-color: var(--primary-color);
+            transform: scale(0.95);
+        }
+
+        .close-button.visible {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @media (max-width: 768px) {
+            .close-button.visible {
+                display: flex;
+            }
         }
     </style>
 </head>
 <body>
     <div class="main-container">
         <div class="eduquest-container">
+            <button class="close-button" id="closeButton">
+                <i class="fas fa-times"></i>
+            </button>
             <div class="hover-area" id="hoverArea"></div>
             <div class="icon-container">
                 <div class="role-icon student-icon" id="studentIcon" data-role="Student">
@@ -255,24 +310,148 @@
             const numberOfParticles = 50;
             const mainTitle = document.getElementById('mainTitle');
             const hoverArea = document.getElementById('hoverArea');
+            const closeButton = document.getElementById('closeButton');
             const roleIcons = document.querySelectorAll('.role-icon');
             const originalTitle = mainTitle.textContent;
             let currentHoveredIcon = null;
             let isHoverAreaActive = false;
             let iconsActivated = false;
+            let isTouchDevice = false;
+
+            // Detect if it's a touch device
+            function detectTouchDevice() {
+                return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            }
+
+            isTouchDevice = detectTouchDevice();
 
             // Create particles
             for (let i = 0; i < numberOfParticles; i++) {
                 createParticle(particlesContainer);
             }
 
-            // Toggle hover state for the main area
-            hoverArea.addEventListener('mouseenter', function() {
-                this.classList.add('active');
+            // Click/Touch handler for main area
+            hoverArea.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (!isHoverAreaActive) {
+                    activateIcons();
+                }
+            });
+
+            // Touch handler for main area
+            hoverArea.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (!isHoverAreaActive) {
+                    activateIcons();
+                }
+            });
+
+            // Desktop hover behavior (only if not touch device)
+            if (!isTouchDevice) {
+                hoverArea.addEventListener('mouseenter', function() {
+                    if (!isHoverAreaActive) {
+                        activateIcons();
+                    }
+                });
+
+                hoverArea.addEventListener('mouseleave', function(e) {
+                    // Check if we're not hovering over an icon
+                    let relatedTarget = e.relatedTarget;
+                    let hoveredToIcon = false;
+
+                    while (relatedTarget) {
+                        if (relatedTarget.classList && relatedTarget.classList.contains('role-icon')) {
+                            hoveredToIcon = true;
+                            break;
+                        }
+                        relatedTarget = relatedTarget.parentElement;
+                    }
+
+                    if (!hoveredToIcon) {
+                        deactivateEverything();
+                    }
+                });
+            }
+
+            // Close button handler
+            closeButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                deactivateEverything();
+            });
+
+            closeButton.addEventListener('touchend', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                deactivateEverything();
+            });
+
+            // Handle icon interactions
+            roleIcons.forEach(icon => {
+                // Desktop hover behavior (only if not touch device)
+                if (!isTouchDevice) {
+                    icon.addEventListener('mouseenter', function(e) {
+                        if (!iconsActivated) return;
+                        handleIconHover(this);
+                    });
+
+                    icon.addEventListener('mouseleave', function(e) {
+                        if (!iconsActivated) return;
+                        handleIconLeave(this, e);
+                    });
+                }
+
+                // Click/Touch handlers for all devices
+                icon.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (!iconsActivated) return;
+                    
+                    const role = this.getAttribute('data-role').toLowerCase();
+                    window.location.href = `/login?user_type=${role}`;
+                });
+
+                icon.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (!iconsActivated) return;
+                    
+                    // For touch devices, show the role text on touch
+                    if (isTouchDevice) {
+                        handleIconHover(this);
+                        // Auto-hide after 2 seconds
+                        setTimeout(() => {
+                            if (currentHoveredIcon === this) {
+                                resetTitleText();
+                            }
+                        }, 2000);
+                    }
+                    
+                    const role = this.getAttribute('data-role').toLowerCase();
+                    // Small delay to show the text change before navigation
+                    setTimeout(() => {
+                        window.location.href = `/login?user_type=${role}`;
+                    }, isTouchDevice ? 500 : 0);
+                });
+            });
+
+            function activateIcons() {
+                hoverArea.classList.add('active');
                 mainTitle.classList.add('active');
                 isHoverAreaActive = true;
 
-                // Activate icons with a slight delay to prevent immediate hover
+                // Show close button on mobile
+                if (isTouchDevice) {
+                    closeButton.classList.add('visible');
+                }
+
+                // Activate icons with a slight delay
                 setTimeout(() => {
                     if (isHoverAreaActive) {
                         roleIcons.forEach(icon => {
@@ -280,100 +459,89 @@
                         });
                         iconsActivated = true;
                     }
-                }, 700); // Delay to allow icons to finish animation
-            });
-
-            hoverArea.addEventListener('mouseleave', function(e) {
-                // Check if we're not hovering over an icon
-                let relatedTarget = e.relatedTarget;
-                let hoveredToIcon = false;
-
-                while (relatedTarget) {
-                    if (relatedTarget.classList && relatedTarget.classList.contains('role-icon')) {
-                        hoveredToIcon = true;
-                        break;
-                    }
-                    relatedTarget = relatedTarget.parentElement;
-                }
-
-                if (!hoveredToIcon) {
-                    deactivateEverything();
-                }
-            });
-
-            // Handle icon hover and click
-            roleIcons.forEach(icon => {
-                icon.addEventListener('mouseenter', function(e) {
-                    // Only respond to hover if icons are activated
-                    if (!iconsActivated) return;
-
-                    currentHoveredIcon = this;
-                    const role = this.getAttribute('data-role');
-
-                    // Text change animation
-                    mainTitle.style.transform = 'scale(0.8)';
-                    mainTitle.style.opacity = '0';
-
-                    setTimeout(() => {
-                        mainTitle.textContent = (role === 'Admin' ? 'An ' : 'A ') + role + '?';
-                        mainTitle.style.transform = 'scale(1.1)';
-                        mainTitle.style.opacity = '1';
-                    }, 200);
-                });
-
-                icon.addEventListener('mouseleave', function(e) {
-                    // Only respond to hover if icons are activated
-                    if (!iconsActivated) return;
-
-                    // Check if we're not hovering back to the hover area
-                    let relatedTarget = e.relatedTarget;
-                    let hoveredBackToArea = false;
-
-                    while (relatedTarget) {
-                        if (relatedTarget.id === 'hoverArea' ||
-                            (relatedTarget.classList && relatedTarget.classList.contains('eduquest-container'))) {
-                            hoveredBackToArea = true;
-                            break;
-                        }
-                        relatedTarget = relatedTarget.parentElement;
-                    }
-
-                    currentHoveredIcon = null;
-
-                    // Text change animation back
-                    mainTitle.style.transform = 'scale(0.8)';
-                    mainTitle.style.opacity = '0';
-
-                    setTimeout(() => {
-                        mainTitle.textContent = originalTitle;
-                        mainTitle.style.transform = 'scale(1)';
-                        mainTitle.style.opacity = '1';
-                    }, 200);
-
-                    // If not hovering back to the main area, deactivate everything
-                    if (!hoveredBackToArea) {
-                        deactivateEverything();
-                    }
-                });
-
-                icon.addEventListener('click', function() {
-                    if (!iconsActivated) return;
-                    const role = this.getAttribute('data-role').toLowerCase();
-                    window.location.href = `/login?user_type=${role}`;
-                });
-            });
+                }, 700);
+            }
 
             function deactivateEverything() {
                 hoverArea.classList.remove('active');
                 mainTitle.classList.remove('active');
-                mainTitle.textContent = originalTitle;
+                closeButton.classList.remove('visible');
+                resetTitleText();
                 isHoverAreaActive = false;
 
                 roleIcons.forEach(icon => {
                     icon.classList.remove('activated');
                 });
                 iconsActivated = false;
+                currentHoveredIcon = null;
             }
+
+            function handleIconHover(icon) {
+                currentHoveredIcon = icon;
+                const role = icon.getAttribute('data-role');
+
+                // Text change animation
+                mainTitle.style.transform = 'scale(0.8)';
+                mainTitle.style.opacity = '0';
+
+                setTimeout(() => {
+                    mainTitle.textContent = (role === 'Admin' ? 'An ' : 'A ') + role + '?';
+                    mainTitle.style.transform = 'scale(1.1)';
+                    mainTitle.style.opacity = '1';
+                }, 200);
+            }
+
+            function handleIconLeave(icon, e) {
+                // Check if we're not hovering back to the hover area
+                let relatedTarget = e.relatedTarget;
+                let hoveredBackToArea = false;
+
+                while (relatedTarget) {
+                    if (relatedTarget.id === 'hoverArea' ||
+                        (relatedTarget.classList && relatedTarget.classList.contains('eduquest-container'))) {
+                        hoveredBackToArea = true;
+                        break;
+                    }
+                    relatedTarget = relatedTarget.parentElement;
+                }
+
+                currentHoveredIcon = null;
+                resetTitleText();
+
+                // If not hovering back to the main area, deactivate everything
+                if (!hoveredBackToArea) {
+                    deactivateEverything();
+                }
+            }
+
+            function resetTitleText() {
+                // Text change animation back
+                mainTitle.style.transform = 'scale(0.8)';
+                mainTitle.style.opacity = '0';
+
+                setTimeout(() => {
+                    mainTitle.textContent = originalTitle;
+                    mainTitle.style.transform = 'scale(1)';
+                    mainTitle.style.opacity = '1';
+                }, 200);
+            }
+
+            // Handle clicks outside the container to close on mobile
+            document.addEventListener('click', function(e) {
+                if (isTouchDevice && isHoverAreaActive) {
+                    const container = document.querySelector('.eduquest-container');
+                    if (!container.contains(e.target)) {
+                        deactivateEverything();
+                    }
+                }
+            });
+
+            // Prevent body scrolling on mobile when interface is active
+            document.addEventListener('touchmove', function(e) {
+                if (isHoverAreaActive) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
         });
 
         function createParticle(container) {
